@@ -27,7 +27,7 @@ If you're using the command line, just do:
 
 1. `make setup` to install libraries
 2. `make compile` to compile stuff
-3. `make flas` to flash the ESP8266
+3. `make flash` to flash the ESP8266
 
 If you've already assembled the PCB, this should be it.  By default the ESP8266
 will create an ad-hoc network.  Connect to that network and configure the chip
