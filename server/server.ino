@@ -6,16 +6,8 @@
 #include <base64.h>
 #include <WiFiManager.h>
 
-#ifndef STASSID
-#define STASSID "WifiAPName"
-#define STAPSK  "WifiPassword"
-#endif
-
 #define SDA 0 // GPIO0 on ESP-01 module
 #define SCL 2 // GPIO2 on ESP-01 module
-
-const char* ssid     = STASSID;
-const char* password = STAPSK;
 
 ESP8266WiFiMulti WiFiMulti;
 WiFiUDP udp;
@@ -27,16 +19,13 @@ int i = 0;
 int recordId = 0;
 
 void setup() {
-  Serial.begin(9600);
+  WiFiManager wifiManager;
 
-  WiFi.mode(WIFI_STA);
-  WiFiMulti.addAP(ssid, password);
-
-  while (WiFiMulti.run() != WL_CONNECTED) {
-    delay(500);
-  }
+  wifiManager.autoConnect();
 
   delay(500);
+
+  Serial.begin(9600);
   Wire.begin(0, 2);
   sensor.begin(SDA, SCL);
 }
