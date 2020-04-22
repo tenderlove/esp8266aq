@@ -1,4 +1,7 @@
-# A program to listen for AQ info
+# Sample program for listening to AQ / Temp / RH information.
+#
+# The server that runs on the ESP8266 broadcasts data via UDP on port 9000.
+# This program just listens for that data and decodes it
 
 require "socket"
 require "ipaddr"
@@ -45,8 +48,6 @@ socket.setsockopt(:SOL_SOCKET, :SO_REUSEPORT, 1)
 
 socket.bind(BIND_ADDR, PORT)
 
-known = ["84:F3:EB:30:8B:3F", "84:F3:EB:30:80:AD", "84:F3:EB:31:09:D0"]
-
 loop do
   m, _ = socket.recvfrom(2000)
   record = JSON.load(m)
@@ -58,11 +59,8 @@ loop do
     aq = AQ.new(*unpack.drop(3).first(12))
     temprh = TempRH.new(record["temperature"] / 100.0, record["humidity"])
     rec = Combined.new(Time.now.utc, record["mac"], record["record_id"], aq, temprh)
-    if known.include? rec.mac
-      p known: Time.now.utc
-    else
-      p rec
-    end
+
+    p rec
   end
 end
 
