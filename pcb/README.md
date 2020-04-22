@@ -13,7 +13,7 @@ Here are the parts I used:
 * [PMS5003](https://www.aliexpress.com/item/32834164058.html) for Air Quality
 * [LD1117V33](https://www.digikey.com/product-detail/en/stmicroelectronics/LD1117V33/497-1491-5-ND/586012) 3.3v regulator
 * 100nf capacitor
-* 10uf capacitor
+* 10uf capacitor (4mm radial)
 * [WM7626CT-ND](https://www.digikey.com/product-detail/en/molex/0532610871/WM7626CT-ND/699113) Molex SMD connector for the AQ sensor
 * [USB 2.0 Mini connector](https://www.digikey.com/product-detail/en/edac-inc/690-005-299-043/151-1206-1-ND/4312192) for 5v power supply
 * [6 pin header](https://www.digikey.com/product-detail/en/sullins-connector-solutions/PPTC032LFBN-RC/S7071-ND/810210) to plug in the ESP8266
