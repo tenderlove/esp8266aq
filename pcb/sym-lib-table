@@ -1,0 +1,5 @@
+(sym_lib_table
+  (lib (name pm_25)(type Legacy)(uri ${KIPRJMOD}/pm_25.lib)(options "")(descr ""))
+  (lib (name PMSX003-Breakout-eagle-import)(type Legacy)(uri ${KIPRJMOD}/PMSX003-Breakout-eagle-import.lib)(options "")(descr ""))
+  (lib (name ESP8266)(type Legacy)(uri /Users/aaron/git/kicad-ESP8266/ESP8266.lib)(options "")(descr ""))
+)
