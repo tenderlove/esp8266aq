@@ -17,12 +17,16 @@ sensor with the network you want it to connect to.
 
 ## Hardware
 
-The PCB is found in the pcb directory.  It's just a Kicad project.
+The PCB is found in the [pcb](pcb) directory.  It's just a Kicad project.  The
+[README](pcb/README.md) in that folder has more information about the hardware
+side of this project (including parts, etc).
 
 ## Firmware
 
-The firmware is found in the `server` directory.  I should probably rename
-that, but I don't feel like it right now.
+The firmware is found in the [server](server) directory.  I should probably
+rename that, but I don't feel like it right now.  The
+[README](server/README.md) file in that folder has more information about the
+firmware side of this project.
 
 ## Client
 
