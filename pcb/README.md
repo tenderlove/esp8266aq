@@ -12,7 +12,7 @@ Here are the parts I used:
 * [Si7021](https://www.aliexpress.com/item/4000598507886.html) for temp / humidity over I2C
 * [PMS5003](https://www.aliexpress.com/item/32834164058.html) for Air Quality
 * [LD1117V33](https://www.digikey.com/product-detail/en/stmicroelectronics/LD1117V33/497-1491-5-ND/586012) 3.3v regulator
-* 100nf capacitor
+* 100nf capacitor (4.7mm disc)
 * 10uf capacitor (4mm radial)
 * [WM7626CT-ND](https://www.digikey.com/product-detail/en/molex/0532610871/WM7626CT-ND/699113) Molex SMD connector for the AQ sensor
 * [USB 2.0 Mini connector](https://www.digikey.com/product-detail/en/edac-inc/690-005-299-043/151-1206-1-ND/4312192) for 5v power supply

@@ -34,4 +34,7 @@ will create an ad-hoc network.  Connect to that network and configure the chip
 with your wifi credentials.  After it connects to your network it will start
 broadcasting sensor information.
 
+You may need to adjust `PORT` inside the `Makefile` in case your programmer is
+in a different location.
+
 See `client.rb` in the main director for a Ruby client that listens for sensor data.

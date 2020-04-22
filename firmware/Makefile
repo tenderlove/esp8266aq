@@ -14,3 +14,6 @@ setup:
 	arduino-cli core update-index
 	arduino-cli core install esp8266:esp8266
 	arduino-cli lib install WiFiManager
+
+clean:
+	rm *.elf *.bin

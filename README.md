@@ -23,9 +23,8 @@ side of this project (including parts, etc).
 
 ## Firmware
 
-The firmware is found in the [server](server) directory.  I should probably
-rename that, but I don't feel like it right now.  The
-[README](server/README.md) file in that folder has more information about the
+The firmware is found in the [firmware](firmware) directory.  The
+[README](firmware/README.md) file in that folder has more information about the
 firmware side of this project.
 
 ## Client
