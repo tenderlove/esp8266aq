@@ -29,7 +29,7 @@ firmware side of this project.
 
 ## Client
 
-There is a sample client in `client.rb`.  It will listen for sensor data then
+There is a sample client in [`client.rb`](client.rb).  It will listen for sensor data then
 print it to the terminal.  You should decide what to do with that data.
 Personally, I am feeding it in to an InfluxDB and then using Grafana to plot
 the data:
