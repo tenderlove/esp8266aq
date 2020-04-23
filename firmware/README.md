@@ -37,4 +37,4 @@ broadcasting sensor information.
 You may need to adjust `PORT` inside the `Makefile` in case your programmer is
 in a different location.
 
-See `client.rb` in the main director for a Ruby client that listens for sensor data.
+See [`client.rb`](../client.rb) in the main director for a Ruby client that listens for sensor data.
