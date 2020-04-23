@@ -1,7 +1,7 @@
 # My ESP8266 + Plantower AQ Sensor Project PCB
 
 This is the PCB for the project.  I've checked in the gerber files in
-`gerber.zip`, so you can just upload that to a PCB manufacturer and get PCBs
+`gerbers.zip`, so you can just upload that to a PCB manufacturer and get PCBs
 made.  I like JLCPCB.
 
 ## Parts List
