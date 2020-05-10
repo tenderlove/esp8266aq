@@ -14,6 +14,7 @@ setup:
 	arduino-cli core update-index
 	arduino-cli core install esp8266:esp8266
 	arduino-cli lib install WiFiManager
+	arduino-cli lib install PubSubClient
 
 clean:
 	rm *.elf *.bin
