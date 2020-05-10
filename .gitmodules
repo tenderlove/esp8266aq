@@ -1,3 +1,6 @@
 [submodule "pcb/lib/kicad-ESP8266"]
 	path = pcb/lib/kicad-ESP8266
 	url = git@github.com:jdunmire/kicad-ESP8266.git
+[submodule "firmware/libraries/SI7021"]
+	path = firmware/libraries/SI7021
+	url = git@github.com:LowPowerLab/SI7021.git
