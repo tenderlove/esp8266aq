@@ -41,8 +41,10 @@ void loop() {
     }
     if (i == 32) {
       i = 0;
-      int temperature = sensor.getCelsiusHundredths();
-      int humidity = sensor.getHumidityPercent();
+
+      auto weather = sensor.getHumidityAndTemperature();
+      int temperature = weather.celsiusHundredths;
+      int humidity = weather.humidityBasisPoints;
 
       String encoded = base64::encode(inputString, 32);
       udp.beginPacketMulticast(broadcastIp, 9000, WiFi.localIP());

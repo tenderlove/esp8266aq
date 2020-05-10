@@ -57,7 +57,7 @@ loop do
   crc = 0x42 + 0x4d + 28 + data.bytes.drop(4).first(26).inject(:+)
   unless crc != unpack.last
     aq = AQ.new(*unpack.drop(3).first(12))
-    temprh = TempRH.new(record["temperature"] / 100.0, record["humidity"])
+    temprh = TempRH.new(record["temperature"] / 100.0, record["humidity"] / 100.0)
     rec = Combined.new(Time.now.utc, record["mac"], record["record_id"], aq, temprh)
 
     p rec
