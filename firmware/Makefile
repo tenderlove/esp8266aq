@@ -4,7 +4,7 @@ PORT = /dev/tty.usbserial-1412230
 CC = arduino-cli
 
 compile: 
-	$(CC) compile --fqbn $(FQBN) `pwd`
+	$(CC) compile --fqbn $(FQBN) --libraries=libraries `pwd`
 
 flash: 
 	$(CC) upload -p $(PORT) --fqbn $(FQBN) `pwd`
