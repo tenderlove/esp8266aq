@@ -14,8 +14,8 @@ PubSubClient client(espClient);
 const char *mqtt_server = "192.168.1.7";
 const char *mqtt_prefix = "home/livingroom/esp8266aq";
 
-byte inputString[32];
-int inputIdx = 0;
+byte input_string[32];
+int input_idx = 0;
 
 void setup() {
   WiFiManager wifiManager;
@@ -86,26 +86,25 @@ void loop() {
   client.loop();
 
   while (Serial.available()) {
-    inputString[inputIdx] = Serial.read();
-    inputIdx++;
-    if (inputIdx == 2) { // Check for start of packet
-      if (!(inputString[0] == 0x42 && inputString[1] == 0x4d)) {
-        inputIdx = 0;
+    input_string[input_idx++] = Serial.read();
+    if (input_idx == 2) { // Check for start of packet
+      if (!(input_string[0] == 0x42 && input_string[1] == 0x4d)) {
+        input_idx = 0;
       }
     }
-    if (inputIdx == 32) {
-      inputIdx = 0;
+    if (input_idx == 32) {
+      input_idx = 0;
 
       auto weather = sensor.getHumidityAndTemperature();
       unsigned int temperature = weather.celsiusHundredths;
       unsigned int humidity = weather.humidityBasisPoints;
 
       mqtt_publish("temperature", "%u.%.2u", temperature / 100, temperature % 100);
-      mqtt_publish("humidity", "%u.%.2u", humidity / 100, humidity % 100);
+      mqtt_publish("humidity",    "%u.%.2u", humidity    / 100, humidity    % 100);
 
       for(int i = 0; i < ARRAY_SIZE(pms5003_topics); i++) {
-        byte high = inputString[4+i*2];
-        byte low  = inputString[4+i*2+1];
+        byte high = input_string[4+i*2];
+        byte low  = input_string[4+i*2+1];
         unsigned int value = (high << 8) | low;
 
         mqtt_publish(pms5003_topics[i], "%u", value);
