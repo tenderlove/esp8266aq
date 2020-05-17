@@ -1,6 +1,6 @@
 BOARD = esp8266:esp8266:generic
 FQBN = $(BOARD):xtal=80,vt=flash,exception=legacy,ssl=all,ResetMethod=nodemcu,CrystalFreq=26,FlashFreq=40,FlashMode=dout,eesz=1M64,led=2,sdk=nonosdk_190703,ip=lm2f,dbg=Disabled,lvl=None____,wipe=none,baud=115200
-PORT = /dev/tty.usbmodem143101
+PORT = /dev/tty.usbserial-14340
 CC = arduino-cli
 
 compile: 
