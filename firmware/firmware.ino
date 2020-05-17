@@ -67,6 +67,9 @@ const char *pms5003_topics[] = {
 };
 
 void mqtt_publish(const char *topic, const char *format, ...) {
+  if (!client.connected())
+    return;
+
   char full_topic[256];
   char value[256];
   sprintf(full_topic, "%s/%s", mqtt_prefix, topic);
