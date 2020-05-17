@@ -90,12 +90,11 @@ void loop() {
 
   while (Serial.available()) {
     input_string[input_idx++] = Serial.read();
-    if (input_idx == 2) { // Check for start of packet
-      if (!(input_string[0] == 0x42 && input_string[1] == 0x4d)) {
-        input_idx = 0;
-      }
-    }
-    if (input_idx == 32) {
+    if (input_idx == 1 && input_string[0] != 0x42) {
+      input_idx = 0;
+    } else if (input_idx == 2 && input_string[1] != 0x4d) {
+      input_idx = 0;
+    } else if (input_idx == 32) {
       input_idx = 0;
 
       for(int i = 0; i < ARRAY_SIZE(pms5003_topics); i++) {
