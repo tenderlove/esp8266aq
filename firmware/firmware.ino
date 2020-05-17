@@ -98,13 +98,6 @@ void loop() {
     if (input_idx == 32) {
       input_idx = 0;
 
-      auto weather = sensor.getHumidityAndTemperature();
-      unsigned int temperature = weather.celsiusHundredths;
-      unsigned int humidity = weather.humidityBasisPoints;
-
-      mqtt_publish("temperature", "%u.%.2u", temperature / 100, temperature % 100);
-      mqtt_publish("humidity",    "%u.%.2u", humidity    / 100, humidity    % 100);
-
       for(int i = 0; i < ARRAY_SIZE(pms5003_topics); i++) {
         byte high = input_string[4+i*2];
         byte low  = input_string[4+i*2+1];
@@ -113,5 +106,17 @@ void loop() {
         mqtt_publish(pms5003_topics[i], "%u", value);
       }
     }
+  }
+
+  static unsigned long last_time_measurement = 0;
+  if(millis() - last_time_measurement > 5000){
+    last_time_measurement = millis();
+
+    auto weather = sensor.getHumidityAndTemperature();
+    unsigned int temperature = weather.celsiusHundredths;
+    unsigned int humidity = weather.humidityBasisPoints;
+
+    mqtt_publish("temperature", "%u.%.2u", temperature / 100, temperature % 100);
+    mqtt_publish("humidity",    "%u.%.2u", humidity    / 100, humidity    % 100);
   }
 }
