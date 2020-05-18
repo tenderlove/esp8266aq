@@ -88,6 +88,12 @@ void loop() {
   }
   client.loop();
 
+  /* If there is more than one packet in the buffer we only want the most recent */
+  while (Serial.available() > 32) {
+    Serial.read();
+    input_idx = 0;
+  }
+
   while (Serial.available()) {
     input_string[input_idx++] = Serial.read();
     if (input_idx == 1 && input_string[0] != 0x42) {
