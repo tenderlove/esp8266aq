@@ -34,12 +34,11 @@ void loop() {
   while (Serial.available()) {
     inputString[i] = Serial.read();
     i++;
-    if (i == 2) { // Check for start of packet
-      if (!(inputString[0] == 0x42 && inputString[1] == 0x4d)) {
-        i = 0;
-      }
-    }
-    if (i == 32) {
+    if (i == 1 && inputString[0] != 0x42) {
+      i = 0;
+    } else if (i == 2 && inputString[1] != 0x4d) {
+      i = 0;
+    } else if (i == 32) {
       i = 0;
 
       auto weather = sensor.getHumidityAndTemperature();
