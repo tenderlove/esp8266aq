@@ -16,7 +16,7 @@ Here are the parts I used:
 * 10uf capacitor (4mm radial)
 * [WM7626CT-ND](https://www.digikey.com/product-detail/en/molex/0532610871/WM7626CT-ND/699113) Molex SMD connector for the AQ sensor [Europe](https://www.reichelt.nl/molex-pin-header-smd-picoblade-1x8-polig-stekker-molex-532610871-p186231.html)
 * [USB 2.0 Mini connector](https://www.digikey.com/product-detail/en/edac-inc/690-005-299-043/151-1206-1-ND/4312192) for 5v power supply [Europe](https://www.reichelt.nl/mini-usb-inbouwkoppeling-type-b-5-polig-pcb-smd-lum-2486-01-p116161.html)
-* [6 pin header](https://www.digikey.com/product-detail/en/sullins-connector-solutions/PPTC032LFBN-RC/S7071-ND/810210) to plug in the ESP8266 [Europe](https://www.reichelt.nl/female-header-2-54mm-straight-2x3-bkl-10120958-p266683.html)
+* [8 pin header](https://www.digikey.com/product-detail/en/sullins-connector-solutions/PPPC042LFBN-RC/S7107-ND/810244) to plug in the ESP8266 [Europe](https://www.reichelt.nl/female-header-2-54mm-straight-2x4-bkl-10120959-p266684.html)
 * [4 pin header](https://www.digikey.com/product-detail/en/sullins-connector-solutions/PPTC041LFBN-RC/S7002-ND/810144) to plug in the Si7021 breakout board [Europe](https://www.reichelt.nl/female-header-2-54mm-straight-1x4-bkl-10120946-p266671.html)
 
 ## Programmer
