@@ -50,7 +50,7 @@ void loop() {
       udp.beginPacketMulticast(broadcastIp, 9000, WiFi.localIP());
       udp.print("{\"mac\":\"");
       udp.print(WiFi.macAddress());
-      udp.print("\",\"record_id\":");
+      udp.print("\",\"version\":1,\"record_id\":");
       udp.print(recordId);
       udp.print(",\"aq\":\"");
       udp.print(encoded);
