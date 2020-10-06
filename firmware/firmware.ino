@@ -10,12 +10,17 @@ SI7021 sensor;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
+ESP8266WebServer server(80);
 
 const char *mqtt_server = "192.168.1.7";
 const char *mqtt_prefix = "home/livingroom/esp8266aq";
 
 byte input_string[32];
 int input_idx = 0;
+
+void webHandleRoot() {
+  server.send(200, "text/plain", "hello from esp8266!\r\n");
+}
 
 void setup() {
   WiFiManager wifiManager;
@@ -33,6 +38,9 @@ void setup() {
   sensor.begin(SDA, SCL);
 
   client.setServer(mqtt_server, 1883);
+
+  server.on("/", webHandleRoot);
+  server.begin();
 }
 
 void mqtt_reconnect() {
@@ -87,6 +95,8 @@ void loop() {
     mqtt_reconnect();
   }
   client.loop();
+
+  server.handleClient();
 
   /* If there is more than one packet in the buffer we only want the most recent */
   while (Serial.available() > 32) {
