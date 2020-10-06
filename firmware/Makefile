@@ -1,12 +1,12 @@
 BOARD = esp8266:esp8266:generic
 FQBN = $(BOARD):xtal=80,vt=flash,exception=legacy,ssl=all,ResetMethod=nodemcu,CrystalFreq=26,FlashFreq=40,FlashMode=dout,eesz=1M64,led=2,sdk=nonosdk_190703,ip=lm2f,dbg=Disabled,lvl=None____,wipe=none,baud=115200
-PORT = /dev/tty.usbserial-14340
+PORT = $(shell ls -t /dev/tty.usbserial-* | head -n1)
 CC = arduino-cli
 
-compile: 
+compile:
 	$(CC) compile --fqbn $(FQBN) --libraries=libraries `pwd`
 
-flash: 
+flash:
 	$(CC) upload -p $(PORT) --fqbn $(FQBN) `pwd`
 
 setup:
