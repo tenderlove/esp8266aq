@@ -144,17 +144,15 @@ void setup() {
 }
 
 void mqtt_reconnect() {
-  while (!client.connected()) {
-    // Create a random client ID
-    String clientId = "ESP8266AQ-";
-    clientId += String(random(0xffff), HEX);
-
-    if (client.connect(clientId.c_str())) {
-    } else {
-      // Wait 5 seconds before retrying
-      delay(5000);
-    }
+  static unsigned long last_attempt = 0;
+  if (millis() - last_attempt < 5000) {
+    return;
   }
+  last_attempt = millis();
+
+  String clientId = "ESP8266AQ-";
+  clientId += String(random(0xffff), HEX);
+  client.connect(clientId.c_str());
 }
 
 void mqtt_publish(const char *topic, const char *format, ...) {
