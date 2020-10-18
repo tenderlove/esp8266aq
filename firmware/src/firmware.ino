@@ -3,11 +3,13 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
 #include <PubSubClient.h>
+#include <LittleFS.h>
 
 Adafruit_BME280 bme;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
+ESP8266WebServer server(80);
 
 const char *mqtt_server = "10.0.1.211";
 const char *mqtt_prefix = "home/test/esp8266aq";
@@ -24,6 +26,29 @@ void configModeCallback (WiFiManager *myWiFiManager) {
   Serial.println(WiFi.softAPIP());
 
   Serial.println(myWiFiManager->getConfigPortalSSID());
+}
+
+String getContentType(String filename) {
+  if (filename.endsWith(".html")) return "text/html";
+  else if (filename.endsWith(".css")) return "text/css";
+  else if (filename.endsWith(".js")) return "application/javascript";
+  else if (filename.endsWith(".ico")) return "image/x-icon";
+  return "text/plain";
+}
+
+bool handleFileRead(String path) {
+  if (path.endsWith("/"))
+    path += "index.html";
+
+  String contentType = getContentType(path);
+  if (LittleFS.exists(path)) {
+    File file = LittleFS.open(path, "r");
+    server.streamFile(file, contentType);
+    file.close();
+    return true;
+  }
+
+  return false;
 }
 
 void setup() {
@@ -46,10 +71,18 @@ void setup() {
     Serial.println("Couldn't find BME280 sensor");
     delay(50);
   }
+  LittleFS.begin();
 
   Serial.flush();
   client.setServer(mqtt_server, 1883);
   Serial.swap(); // Switch to sensor
+
+  server.onNotFound([]() {
+    if (!handleFileRead(server.uri()))
+      server.send(404, "text/plain", "404: Not Found");
+  });
+
+  server.begin();
 }
 
 void mqtt_reconnect() {
@@ -108,6 +141,7 @@ void loop() {
     Serial.swap();
   }
   client.loop();
+  server.handleClient();
 
   while (Serial.available()) {
     inputString[inputIdx] = Serial.read();
