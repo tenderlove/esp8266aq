@@ -21,6 +21,44 @@ int inputIdx = 0;
 #define G2_PIN 14
 #define G3_PIN 12
 
+struct Measurement {
+  const char *name;
+  const int scale;
+
+  unsigned long last_measured_at;
+  int last_value;
+
+  Measurement(const char *name, int scale = 0):
+    name(name),
+    scale(scale),
+    last_measured_at(0),
+    last_value(0) {};
+
+  void record(int value) {
+    last_value = value;
+    last_measured_at = millis();
+  }
+};
+
+Measurement measurement_temperature("temperature", 100);
+Measurement measurement_humidity("humidity", 100);
+
+#define NUM_MEASUREMENTS_PMS5003 12
+Measurement measurements_pms5003[NUM_MEASUREMENTS_PMS5003] = {
+  Measurement("pm1_0_standard"),
+  Measurement("pm2_5_standard"),
+  Measurement("pm10_standard"),
+  Measurement("pm1_0_env"),
+  Measurement("pm2_5_env"),
+  Measurement("concentration_unit"),
+  Measurement("particles_03um"),
+  Measurement("particles_05um"),
+  Measurement("particles_10um"),
+  Measurement("particles_25um"),
+  Measurement("particles_50um"),
+  Measurement("particles_100um")
+};
+
 void configModeCallback (WiFiManager *myWiFiManager) {
   Serial.println("Entered config mode");
   Serial.println(WiFi.softAPIP());
@@ -51,6 +89,39 @@ bool handleFileRead(String path) {
   return false;
 }
 
+void addMeasurementJson(String &json, Measurement &m) {
+  json += "{\"name\": \"";
+  json += m.name;
+  json += "\", \"value\": ";
+  if (m.scale) {
+    json += float(m.last_value) / m.scale;
+  } else {
+    json += m.last_value;
+  }
+  json += ", \"last_measured_at\": ";
+  json += m.last_measured_at;
+  json += "}, ";
+}
+
+void webHandleStatus() {
+  String json;
+  json.reserve(512);
+  json += "{\"measurements\": [";
+
+  addMeasurementJson(json, measurement_temperature);
+  addMeasurementJson(json, measurement_humidity);
+  for(int i = 0; i < NUM_MEASUREMENTS_PMS5003; i++) {
+    addMeasurementJson(json, measurements_pms5003[i]);
+  }
+  json.remove(json.lastIndexOf(",")); // remove trailing comma
+
+  json += "], \"current_time\": ";
+  json += millis();
+  json += "}";
+
+  server.send(200, "application/json", json);
+}
+
 void setup() {
   WiFiManager wifiManager;
 
@@ -77,6 +148,7 @@ void setup() {
   client.setServer(mqtt_server, 1883);
   Serial.swap(); // Switch to sensor
 
+  server.on("/status.json", webHandleStatus);
   server.onNotFound([]() {
     if (!handleFileRead(server.uri()))
       server.send(404, "text/plain", "404: Not Found");
@@ -95,23 +167,6 @@ void mqtt_reconnect() {
   clientId += String(random(0xffff), HEX);
   client.connect(clientId.c_str());
 }
-
-#define ARRAY_SIZE(array) ( sizeof( array )/sizeof( array[0] ) )
-
-const char *pms5003_topics[] = {
-  "pm1_0_standard",
-  "pm2_5_standard",
-  "pm10_standard",
-  "pm1_0_env",
-  "pm2_5_env",
-  "concentration_unit",
-  "particles_03um",
-  "particles_05um",
-  "particles_10um",
-  "particles_25um",
-  "particles_50um",
-  "particles_100um"
-};
 
 void mqtt_publish(const char *topic, const char *format, ...) {
   char full_topic[256];
@@ -153,24 +208,29 @@ void loop() {
     } else if (inputIdx == 32) {
       inputIdx = 0;
 
-      int temperature = round(bme.readTemperature() * 100);
-      int humidity = round(bme.readHumidity() * 100);
-
       if (client.connected()) {
         Serial.swap();
-        mqtt_publish("temperature", "%u.%.2u", temperature / 100, temperature % 100);
-        mqtt_publish("humidity", "%u.%.2u", humidity / 100, humidity % 100);
-
-        for(unsigned int i = 0; i < ARRAY_SIZE(pms5003_topics); i++) {
+        for(unsigned int i = 0; i < NUM_MEASUREMENTS_PMS5003; i++) {
           byte high = inputString[4+i*2];
           byte low  = inputString[4+i*2+1];
           unsigned int value = (high << 8) | low;
 
-          mqtt_publish(pms5003_topics[i], "%u", value);
+          measurements_pms5003[i].record(value);
         }
         Serial.flush();
         Serial.swap();
       }
     }
+  }
+
+  static unsigned long last_time_measurement = 0;
+  if(millis() - last_time_measurement > 5000){
+    last_time_measurement = millis();
+
+    int temperature = round(bme.readTemperature() * 100);
+    int humidity = round(bme.readHumidity() * 100);
+
+    measurement_temperature.record(temperature);
+    measurement_humidity.record(humidity);
   }
 }
