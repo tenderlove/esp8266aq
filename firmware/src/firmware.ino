@@ -13,6 +13,44 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 ESP8266WebServer server(80);
 
+struct Measurement {
+  const char *name;
+  const int scale;
+
+  unsigned long last_measured_at;
+  int last_value;
+
+  Measurement(const char *name, int scale = 0):
+    name(name),
+    scale(scale),
+    last_measured_at(0),
+    last_value(0) {};
+
+  void record(int value) {
+    last_value = value;
+    last_measured_at = millis();
+  }
+};
+
+Measurement measurement_temperature("temperature", 100);
+Measurement measurement_humidity("humidity", 100);
+
+#define NUM_MEASUREMENTS_PMS5003 12
+Measurement measurements_pms5003[NUM_MEASUREMENTS_PMS5003] = {
+  Measurement("pm1_0_standard"),
+  Measurement("pm2_5_standard"),
+  Measurement("pm10_standard"),
+  Measurement("pm1_0_env"),
+  Measurement("pm2_5_env"),
+  Measurement("concentration_unit"),
+  Measurement("particles_03um"),
+  Measurement("particles_05um"),
+  Measurement("particles_10um"),
+  Measurement("particles_25um"),
+  Measurement("particles_50um"),
+  Measurement("particles_100um")
+};
+
 const char *mqtt_server = "192.168.1.7";
 const char *mqtt_prefix = "home/outside/esp8266aq";
 
@@ -42,6 +80,39 @@ bool handleFileRead(String path) {
   return false;
 }
 
+void addMeasurementJson(String &json, Measurement &m) {
+  json += "{\"name\": \"";
+  json += m.name;
+  json += "\", \"value\": ";
+  if (m.scale) {
+    json += float(m.last_value) / m.scale;
+  } else {
+    json += m.last_value;
+  }
+  json += ", \"last_measured_at\": ";
+  json += m.last_measured_at;
+  json += "}, ";
+}
+
+void webHandleStatus() {
+  String json;
+  json.reserve(512);
+  json += "{\"measurements\": [";
+
+  addMeasurementJson(json, measurement_temperature);
+  addMeasurementJson(json, measurement_humidity);
+  for(int i = 0; i < NUM_MEASUREMENTS_PMS5003; i++) {
+    addMeasurementJson(json, measurements_pms5003[i]);
+  }
+  json.remove(json.lastIndexOf(",")); // remove trailing comma
+
+  json += "], \"current_time\": ";
+  json += millis();
+  json += "}";
+
+  server.send(200, "application/json", json);
+}
+
 void setup() {
   WiFiManager wifiManager;
 
@@ -60,6 +131,7 @@ void setup() {
 
   client.setServer(mqtt_server, 1883);
 
+  server.on("/status.json", webHandleStatus);
   server.onNotFound([]() {
     if (!handleFileRead(server.uri()))
       server.send(404, "text/plain", "404: Not Found");
@@ -81,23 +153,6 @@ void mqtt_reconnect() {
     }
   }
 }
-
-#define ARRAY_SIZE(array) ( sizeof( array )/sizeof( array[0] ) )
-
-const char *pms5003_topics[] = {
-  "pm1_0_standard",
-  "pm2_5_standard",
-  "pm10_standard",
-  "pm1_0_env",
-  "pm2_5_env",
-  "concentration_unit",
-  "particles_03um",
-  "particles_05um",
-  "particles_10um",
-  "particles_25um",
-  "particles_50um",
-  "particles_100um"
-};
 
 void mqtt_publish(const char *topic, const char *format, ...) {
   if (!client.connected())
@@ -138,12 +193,13 @@ void loop() {
     } else if (input_idx == 32) {
       input_idx = 0;
 
-      for(int i = 0; i < ARRAY_SIZE(pms5003_topics); i++) {
+      for(int i = 0; i < NUM_MEASUREMENTS_PMS5003; i++) {
         byte high = input_string[4+i*2];
         byte low  = input_string[4+i*2+1];
         unsigned int value = (high << 8) | low;
 
-        mqtt_publish(pms5003_topics[i], "%u", value);
+        measurements_pms5003[i].record(value);
+        //mqtt_publish(pms5003_topics[i], "%u", value);
       }
     }
   }
@@ -153,10 +209,12 @@ void loop() {
     last_time_measurement = millis();
 
     auto weather = sensor.getHumidityAndTemperature();
-    unsigned int temperature = weather.celsiusHundredths;
+    int temperature = weather.celsiusHundredths;
     unsigned int humidity = weather.humidityBasisPoints;
 
-    mqtt_publish("temperature", "%u.%.2u", temperature / 100, temperature % 100);
-    mqtt_publish("humidity",    "%u.%.2u", humidity    / 100, humidity    % 100);
+    measurement_temperature.record(temperature);
+    measurement_humidity.record(humidity);
+    //mqtt_publish("temperature", "%u.%.2u", temperature / 100, temperature % 100);
+    //mqtt_publish("humidity",    "%u.%.2u", humidity    / 100, humidity    % 100);
   }
 }
