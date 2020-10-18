@@ -1,6 +1,8 @@
 <html>
   <head>
     <meta charset="UTF-8">
+
+    <title>ESP8266 Air Quality</title>
     <script src='app.js'></script>
     <style>
       body {
@@ -74,6 +76,34 @@
           <div class="value"><span class="js-value"></span><span class="unit">μg/m³</span></div>
         </div>
       </div>
+
+      <hr>
+
+      <h2>Settings</h2>
+
+      <form>
+        <div>
+          <label>Name:</label>
+          <input type="text" name="name" value="" placeholder="outdoor">
+        </div>
+
+        <div>
+          <label>MQTT Server:</label>
+          <input type="text" name="mqtt_server" value="" placeholder="192.168.0.100">
+        </div>
+
+        <div>
+          <label>MQTT Port:</label>
+          <input type="text" name="mqtt_port" value="" placeholder="1884">
+        </div>
+
+        <div>
+          <label>MQTT Prefix:</label>
+          <input type="text" name="mqtt_prefix" value="" placeholder="home/outdoor/esp8266aq">
+        </div>
+
+        <input type="submit" value="Save and restart" />
+      </form>
 
       <hr>
 

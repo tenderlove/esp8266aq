@@ -5,6 +5,7 @@
 #include <PubSubClient.h>
 #include <LittleFS.h>
 #include <ArduinoOTA.h>
+#include <ArduinoJson.h>
 
 Adafruit_BME280 bme;
 
@@ -60,10 +61,54 @@ Measurement measurements_pms5003[NUM_MEASUREMENTS_PMS5003] = {
   Measurement("particles_100um")
 };
 
-void configModeCallback (WiFiManager *myWiFiManager) {
+struct Config {
+  String name;
+
+  String mqtt_server;
+  unsigned int mqtt_port;
+  String mqtt_prefix;
+};
+
+Config config;
+
+typedef StaticJsonDocument<512> ConfigJsonDocument;
+
+static void loadConfigurationFromDoc(Config &config, ConfigJsonDocument &doc) {
+  config.name = doc["name"].as<String>();
+  config.mqtt_server = doc["mqtt_server"].as<String>();
+  config.mqtt_port = doc["mqtt_port"].as<String>().toInt();
+  config.mqtt_prefix = doc["mqtt_prefix"].as<String>();
+
+  if (!config.mqtt_port) {
+    config.mqtt_port = 1883;
+  }
+}
+
+void loadConfiguration(Config &config) {
+  if (LittleFS.exists("config.json")) {
+    File file = LittleFS.open("config.json", "r");
+
+    ConfigJsonDocument doc;
+    DeserializationError error = deserializeJson(doc, file);
+
+    if (!error) {
+      loadConfigurationFromDoc(config, doc);
+      return;
+    }
+
+    file.close();
+  }
+
+  /* Load defaults */
+  config.name = "esp8266aq";
+  config.mqtt_server = "";
+  config.mqtt_port = 0;
+  config.mqtt_prefix = "esp8266aq";
+}
+
+void configModeCallback(WiFiManager *myWiFiManager) {
   Serial.println("Entered config mode");
   Serial.println(WiFi.softAPIP());
-
   Serial.println(myWiFiManager->getConfigPortalSSID());
 }
 
@@ -71,6 +116,7 @@ String getContentType(String filename) {
   if (filename.endsWith(".html")) return "text/html";
   else if (filename.endsWith(".css")) return "text/css";
   else if (filename.endsWith(".js")) return "application/javascript";
+  else if (filename.endsWith(".json")) return "application/json";
   else if (filename.endsWith(".ico")) return "image/x-icon";
   return "text/plain";
 }
@@ -106,7 +152,7 @@ void addMeasurementJson(String &json, Measurement &m) {
 
 void webHandleStatus() {
   String json;
-  json.reserve(512);
+  json.reserve(1024);
   json += "{\"measurements\": [";
 
   addMeasurementJson(json, measurement_temperature);
@@ -118,10 +164,28 @@ void webHandleStatus() {
 
   json += "], \"current_time\": ";
   json += millis();
-  json += "}";
+  json += ", \"mqtt\": {\"connected\": ";
+  json += client.connected() ? "true" : "false";
+  json += ", \"server\": \"";
+  json += config.mqtt_server;
+  json += "\", \"port\": ";
+  json += config.mqtt_port;
+  json += "}}";
 
   server.sendHeader("Access-Control-Allow-Origin", "*");
   server.send(200, "application/json", json);
+}
+
+void webHandleUpdateConfig() {
+  String body = server.arg("plain");
+
+  File file = LittleFS.open("config.json", "w");
+  file.print(body);
+  file.close();
+
+  server.send(200, "text/json", "{\"success\":true}" );
+
+  ESP.restart();
 }
 
 void setup() {
@@ -145,13 +209,15 @@ void setup() {
     delay(50);
   }
   LittleFS.begin();
+  loadConfiguration(config);
   ArduinoOTA.begin();
 
   Serial.flush();
   client.setServer(mqtt_server, 1883);
   Serial.swap(); // Switch to sensor
 
-  server.on("/status.json", webHandleStatus);
+  server.on("/config.json", HTTP_POST, webHandleUpdateConfig);
+  server.on("/status.json", HTTP_GET, webHandleStatus);
   server.onNotFound([]() {
     if (!handleFileRead(server.uri()))
       server.send(404, "text/plain", "404: Not Found");
@@ -166,15 +232,18 @@ void mqtt_reconnect() {
     return;
   }
 
-  String clientId = "ESP8266AQ-";
-  clientId += String(random(0xffff), HEX);
-  client.connect(clientId.c_str());
+  if (config.mqtt_server.length() && config.mqtt_port) {
+    client.setServer(config.mqtt_server.c_str(), config.mqtt_port);
+
+    String clientId = config.name;
+    client.connect(clientId.c_str());
+  }
 }
 
 void mqtt_publish(const char *topic, const char *format, ...) {
   char full_topic[256];
   char value[256];
-  sprintf(full_topic, "%s/%s", mqtt_prefix, topic);
+  sprintf(full_topic, "%s/%s", config.mqtt_prefix.c_str(), topic);
 
   va_list args;
   va_start(args, format);
@@ -188,7 +257,9 @@ void mqtt_publish(const char *topic, const char *format, ...) {
 }
 
 void loop() {
-  if (!client.connected()) {
+  if (client.connected()) {
+    client.loop();
+  } else {
     mqtt_reconnect();
   }
 
@@ -228,6 +299,7 @@ void loop() {
           unsigned int value = (high << 8) | low;
 
           measurements_pms5003[i].record(value);
+          mqtt_publish(measurements_pms5003[i].name, "%u", value);
         }
         Serial.flush();
         Serial.swap();
@@ -244,5 +316,7 @@ void loop() {
 
     measurement_temperature.record(temperature);
     measurement_humidity.record(humidity);
+    mqtt_publish("temperature", "%u.%.2u", temperature / 100, temperature % 100);
+    mqtt_publish("humidity",    "%u.%.2u", humidity    / 100, humidity    % 100);
   }
 }
