@@ -4,6 +4,7 @@
 #include <Adafruit_BME280.h>
 #include <PubSubClient.h>
 #include <LittleFS.h>
+#include <ArduinoOTA.h>
 
 Adafruit_BME280 bme;
 
@@ -143,6 +144,7 @@ void setup() {
     delay(50);
   }
   LittleFS.begin();
+  ArduinoOTA.begin();
 
   Serial.flush();
   client.setServer(mqtt_server, 1883);
@@ -195,8 +197,17 @@ void loop() {
     Serial.flush();
     Serial.swap();
   }
+
+  server.handleClient();
   client.loop();
   server.handleClient();
+  ArduinoOTA.handle();
+
+  /* If there is more than one packet in the buffer we only want the most recent */
+  while (Serial.available() > 32) {
+    Serial.read();
+    inputIdx = 0;
+  }
 
   while (Serial.available()) {
     inputString[inputIdx] = Serial.read();
