@@ -1,4 +1,4 @@
-const base_url = "";
+const base_url = window.location.hash.substring(1);
 
 function applyData(data) {
   for (let el of document.querySelectorAll(".js-raw-json")) {

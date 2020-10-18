@@ -120,6 +120,7 @@ void webHandleStatus() {
   json += millis();
   json += "}";
 
+  server.sendHeader("Access-Control-Allow-Origin", "*");
   server.send(200, "application/json", json);
 }
 
