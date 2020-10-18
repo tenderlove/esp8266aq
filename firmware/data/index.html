@@ -5,6 +5,10 @@
     <style>
       body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        color: #333;
+      }
+      h1 {
+        font-size: 7vw;
       }
       .content {
         margin: auto;
@@ -32,6 +36,11 @@
         visibility: hidden;
       }
 
+      .summary-table .description {
+        color: #666;
+        font-size: 30%;
+      }
+
       .summary-table .emoji {
         font-size: 8vw;
       }
@@ -51,14 +60,17 @@
       <div class="summary-table">
         <div class="cell temperature js-temperature">
           <div class="emoji">🌡️</div>
+          <div class="description">Temperature</div>
           <div class="value"><span class="js-value"></span><span class=unit>°C</span></div>
         </div>
         <div class="cell humidity js-humidity">
           <div class="emoji">🌧️</div>
+          <div class="description">Humidity</div>
           <div class="value"><span class="js-value"></span><span class="unit">%</span></div>
         </div>
         <div class="cell pm25 js-pm25">
           <div class="emoji">🌫️</div>
+          <div class="description">PM 2.5</div>
           <div class="value"><span class="js-value"></span><span class="unit">μg/m³</span></div>
         </div>
       </div>
