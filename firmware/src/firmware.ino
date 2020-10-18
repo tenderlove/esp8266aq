@@ -2,6 +2,7 @@
 #include <ESP8266WiFi.h>
 #include <WiFiManager.h>
 #include <PubSubClient.h>
+#include <LittleFS.h>
 
 #define SDA 0 // GPIO0 on ESP-01 module
 #define SCL 2 // GPIO2 on ESP-01 module
@@ -13,13 +14,32 @@ PubSubClient client(espClient);
 ESP8266WebServer server(80);
 
 const char *mqtt_server = "192.168.1.7";
-const char *mqtt_prefix = "home/livingroom/esp8266aq";
+const char *mqtt_prefix = "home/outside/esp8266aq";
 
 byte input_string[32];
 int input_idx = 0;
 
-void webHandleRoot() {
-  server.send(200, "text/plain", "hello from esp8266!\r\n");
+String getContentType(String filename) {
+  if (filename.endsWith(".html")) return "text/html";
+  else if (filename.endsWith(".css")) return "text/css";
+  else if (filename.endsWith(".js")) return "application/javascript";
+  else if (filename.endsWith(".ico")) return "image/x-icon";
+  return "text/plain";
+}
+
+bool handleFileRead(String path) {
+  if (path.endsWith("/"))
+    path += "index.html";
+
+  String contentType = getContentType(path);
+  if (LittleFS.exists(path)) {
+    File file = LittleFS.open(path, "r");
+    server.streamFile(file, contentType);
+    file.close();
+    return true;
+  }
+
+  return false;
 }
 
 void setup() {
@@ -33,13 +53,18 @@ void setup() {
     delay(500);
   }
 
+  LittleFS.begin();
   Serial.begin(9600);
   Wire.begin(0, 2);
   sensor.begin(SDA, SCL);
 
   client.setServer(mqtt_server, 1883);
 
-  server.on("/", webHandleRoot);
+  server.onNotFound([]() {
+    if (!handleFileRead(server.uri()))
+      server.send(404, "text/plain", "404: Not Found");
+  });
+
   server.begin();
 }
 
