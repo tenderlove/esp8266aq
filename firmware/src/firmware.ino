@@ -3,6 +3,7 @@
 #include <WiFiManager.h>
 #include <PubSubClient.h>
 #include <LittleFS.h>
+#include <ArduinoOTA.h>
 
 #define SDA 0 // GPIO0 on ESP-01 module
 #define SCL 2 // GPIO2 on ESP-01 module
@@ -128,6 +129,7 @@ void setup() {
   Serial.begin(9600);
   Wire.begin(0, 2);
   sensor.begin(SDA, SCL);
+  ArduinoOTA.begin();
 
   client.setServer(mqtt_server, 1883);
 
@@ -177,6 +179,7 @@ void loop() {
   client.loop();
 
   server.handleClient();
+  ArduinoOTA.handle();
 
   /* If there is more than one packet in the buffer we only want the most recent */
   while (Serial.available() > 32) {
