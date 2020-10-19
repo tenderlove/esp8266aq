@@ -159,6 +159,12 @@ void webHandleStatus() {
   json += config.mqtt_server;
   json += "\", \"port\": ";
   json += config.mqtt_port;
+  json += "}, \"esp8266\": {\"heap_free\":";
+  json += ESP.getFreeHeap();
+  json += ", \"heap_fragmentation\": ";
+  json += ESP.getHeapFragmentation();
+  json += ", \"heap_max_free_block_size\": ";
+  json += ESP.getMaxFreeBlockSize();
   json += "}}";
 
   server.sendHeader("Access-Control-Allow-Origin", "*");
