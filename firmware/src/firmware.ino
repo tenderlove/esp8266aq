@@ -53,6 +53,48 @@ Measurement measurements_pms5003[NUM_MEASUREMENTS_PMS5003] = {
   Measurement("particles_100um")
 };
 
+struct PMS5003 {
+  byte input_string[32];
+  int input_idx;
+
+  PMS5003() : input_idx(0) {}
+
+  void process_byte(byte in) {
+    if(input_idx == 32) {
+      input_idx = 0;
+    }
+
+    input_string[input_idx++] = in;
+    if (input_idx == 1 && input_string[0] != 0x42) {
+      input_idx = 0;
+    } else if (input_idx == 2 && input_string[1] != 0x4d) {
+      input_idx = 0;
+    }
+  }
+
+  void reset_input() {
+    input_idx = 0;
+  }
+
+  unsigned int get_value(int idx) {
+    byte high = input_string[4 + idx * 2];
+    byte low  = input_string[4 + idx * 2 + 1];
+    return (high << 8) | low;
+  }
+
+  /* Are we a full, valid packet */
+  bool is_valid_packet() {
+    if (input_idx != 32)
+      return false;
+
+    /* TODO: check crc */
+
+    return true;
+  }
+};
+
+PMS5003 pms5003;
+
 struct Config {
   String name;
 
@@ -62,9 +104,6 @@ struct Config {
 };
 
 Config config;
-
-byte input_string[32];
-int input_idx = 0;
 
 typedef StaticJsonDocument<512> ConfigJsonDocument;
 
@@ -256,22 +295,15 @@ void loop() {
   /* If there is more than one packet in the buffer we only want the most recent */
   while (Serial.available() > 32) {
     Serial.read();
-    input_idx = 0;
+    pms5003.reset_input();
   }
 
   while (Serial.available()) {
-    input_string[input_idx++] = Serial.read();
-    if (input_idx == 1 && input_string[0] != 0x42) {
-      input_idx = 0;
-    } else if (input_idx == 2 && input_string[1] != 0x4d) {
-      input_idx = 0;
-    } else if (input_idx == 32) {
-      input_idx = 0;
+    pms5003.process_byte(Serial.read());
 
+    if (pms5003.is_valid_packet()) {
       for(int i = 0; i < NUM_MEASUREMENTS_PMS5003; i++) {
-        byte high = input_string[4+i*2];
-        byte low  = input_string[4+i*2+1];
-        unsigned int value = (high << 8) | low;
+        unsigned int value = pms5003.get_value(i);
 
         measurements_pms5003[i].record(value);
         mqtt_publish(measurements_pms5003[i].name, "%u", value);
