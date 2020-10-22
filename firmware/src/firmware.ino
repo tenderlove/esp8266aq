@@ -13,12 +13,6 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 ESP8266WebServer server(80);
 
-const char *mqtt_server = "10.0.1.211";
-const char *mqtt_prefix = "home/test/esp8266aq";
-
-byte inputString[32];
-int inputIdx = 0;
-
 #define LED_PIN 2
 #define G2_PIN 14
 #define G3_PIN 12
@@ -60,6 +54,48 @@ Measurement measurements_pms5003[NUM_MEASUREMENTS_PMS5003] = {
   Measurement("particles_50um"),
   Measurement("particles_100um")
 };
+
+struct PMS5003 {
+  byte input_string[32];
+  int input_idx;
+
+  PMS5003() : input_idx(0) {}
+
+  void process_byte(byte in) {
+    if(input_idx == 32) {
+      input_idx = 0;
+    }
+
+    input_string[input_idx++] = in;
+    if (input_idx == 1 && input_string[0] != 0x42) {
+      input_idx = 0;
+    } else if (input_idx == 2 && input_string[1] != 0x4d) {
+      input_idx = 0;
+    }
+  }
+
+  void reset_input() {
+    input_idx = 0;
+  }
+
+  unsigned int get_value(int idx) {
+    byte high = input_string[4 + idx * 2];
+    byte low  = input_string[4 + idx * 2 + 1];
+    return (high << 8) | low;
+  }
+
+  /* Are we a full, valid packet */
+  bool is_valid_packet() {
+    if (input_idx != 32)
+      return false;
+
+    /* TODO: check crc */
+
+    return true;
+  }
+};
+
+PMS5003 pms5003;
 
 struct Config {
   String name;
@@ -219,7 +255,6 @@ void setup() {
   ArduinoOTA.begin();
 
   Serial.flush();
-  client.setServer(mqtt_server, 1883);
   Serial.swap(); // Switch to sensor
 
   server.on("/config.json", HTTP_POST, webHandleUpdateConfig);
@@ -284,33 +319,24 @@ void loop() {
   /* If there is more than one packet in the buffer we only want the most recent */
   while (Serial.available() > 32) {
     Serial.read();
-    inputIdx = 0;
   }
 
   while (Serial.available()) {
-    inputString[inputIdx] = Serial.read();
-    inputIdx++;
-    if (inputIdx == 1 && inputString[0] != 0x42) {
-      inputIdx = 0;
-    } else if (inputIdx == 2 && inputString[1] != 0x4d) {
-      inputIdx = 0;
-    } else if (inputIdx == 32) {
-      inputIdx = 0;
+    pms5003.process_byte(Serial.read());
 
-      if (client.connected()) {
-        Serial.swap();
-        for(unsigned int i = 0; i < NUM_MEASUREMENTS_PMS5003; i++) {
-          byte high = inputString[4+i*2];
-          byte low  = inputString[4+i*2+1];
-          unsigned int value = (high << 8) | low;
+    if (pms5003.is_valid_packet()) {
+      Serial.swap();
+      for(int i = 0; i < NUM_MEASUREMENTS_PMS5003; i++) {
+        unsigned int value = pms5003.get_value(i);
 
-          measurements_pms5003[i].record(value);
-          mqtt_publish(measurements_pms5003[i].name, "%u", value);
-        }
-        Serial.flush();
-        Serial.swap();
+        measurements_pms5003[i].record(value);
+        mqtt_publish(measurements_pms5003[i].name, "%u", value);
       }
+      Serial.flush();
+      Serial.swap();
     }
+
+    pms5003.reset_input();
   }
 
   static unsigned long last_time_measurement = 0;
