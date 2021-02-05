@@ -58,4 +58,20 @@ class ESPClient
 
     chip.set_gpio_value FLASH_PIN, 1
   end
+
+  def esp_pin14
+    chip.gpio_value ESP_PIN14
+  end
+
+  def esp_pin14= v
+    chip.set_gpio_value ESP_PIN14, v
+  end
+
+  def esp_pin12
+    chip.gpio_value ESP_PIN12
+  end
+
+  def esp_pin12= v
+    chip.set_gpio_value ESP_PIN12, v
+  end
 end
