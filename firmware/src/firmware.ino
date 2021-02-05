@@ -5,29 +5,72 @@
 #include <Wire.h>
 #include <base64.h>
 #include <WiFiManager.h>
-
-#define SDA 0 // GPIO0 on ESP-01 module
-#define SCL 2 // GPIO2 on ESP-01 module
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BME280.h>
 
 ESP8266WiFiMulti WiFiMulti;
 WiFiUDP udp;
 IPAddress broadcastIp(224, 0, 0, 1);
-SI7021 sensor;
+Adafruit_BME280 bme;
 
 byte inputString[32];
 int i = 0;
 int recordId = 0;
 
+#define LED_PIN 2
+#define G2_PIN 14
+#define G3_PIN 12
+
+void configModeCallback (WiFiManager *myWiFiManager) {
+  Serial.println("Entered config mode");
+  Serial.println(WiFi.softAPIP());
+
+  Serial.println(myWiFiManager->getConfigPortalSSID());
+}
+
 void setup() {
   WiFiManager wifiManager;
 
+  pinMode(G2_PIN, INPUT);
+  pinMode(G3_PIN, INPUT);
+
+  Serial.begin(9600);
+  wifiManager.setAPCallback(configModeCallback);
   wifiManager.autoConnect();
 
   delay(500);
 
-  Serial.begin(9600);
-  Wire.begin(0, 2);
-  sensor.begin(SDA, SCL);
+  if (!bme.begin(0x76)) {
+    Serial.println("Couldn't find BME280 sensor");
+    delay(50);
+  }
+  Serial.swap(); // Switch to sensor
+}
+
+#define WRITE_INFO_TO(output) \
+  output.print("{\"mac\":\""); \
+  output.print(WiFi.macAddress()); \
+  output.print("\",\"version\":1,\"record_id\":"); \
+  output.print(recordId); \
+  output.print(",\"aq\":\""); \
+  output.print(encoded); \
+  output.print("\",\"temperature\":"); \
+  output.print(temperature); \
+  output.print(",\"humidity\":"); \
+  output.print(humidity); \
+  output.print("}");
+
+void printToSerial(int temperature, int humidity, String encoded) {
+  Serial.swap(); // Switch to main serial
+  WRITE_INFO_TO(Serial)
+  Serial.flush();
+  Serial.swap(); // Switch to sensor
+}
+
+void printToUdp(int temperature, int humidity, String encoded) {
+  udp.beginPacketMulticast(broadcastIp, 8000, WiFi.localIP());
+  WRITE_INFO_TO(udp)
+  udp.endPacket();
 }
 
 void loop() {
@@ -41,24 +84,13 @@ void loop() {
     } else if (i == 32) {
       i = 0;
 
-      auto weather = sensor.getHumidityAndTemperature();
-      int temperature = weather.celsiusHundredths;
-      int humidity = weather.humidityBasisPoints;
+      int temperature = round(bme.readTemperature() * 100);
+      int humidity = round(bme.readHumidity() * 100);
 
       String encoded = base64::encode(inputString, 32);
-      udp.beginPacketMulticast(broadcastIp, 9000, WiFi.localIP());
-      udp.print("{\"mac\":\"");
-      udp.print(WiFi.macAddress());
-      udp.print("\",\"version\":1,\"record_id\":");
-      udp.print(recordId);
-      udp.print(",\"aq\":\"");
-      udp.print(encoded);
-      udp.print("\",\"temperature\":");
-      udp.print(temperature);
-      udp.print(",\"humidity\":");
-      udp.print(humidity);
-      udp.print("}");
-      udp.endPacket();
+
+      printToSerial(temperature, humidity, encoded);
+      printToUdp(temperature, humidity, encoded);
       recordId++;
     }
   }
