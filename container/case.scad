@@ -158,7 +158,21 @@ module Top() {
   }
 }
 
-//pmcase();
+rendering = "full";
+if (rendering == "full") {
+  rotate([90, 0, 0])
+    Bottom();
+}
+
+if (rendering == "top") {
+  rotate([270, 0, 0])
+    Top();
+}
+
+if (rendering == "bottom") {
+  rotate([90, 0, 0])
+    Bottom();
+}
 //Top();
-rotate([90, 0, 0])
-Bottom();
+//rotate([90, 0, 0])
+//Bottom();
