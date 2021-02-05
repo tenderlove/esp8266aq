@@ -1,5 +1,5 @@
 PM25_X = 38.3;
-PM25_Y = 50.1;
+PM25_Y = 50.2;
 PM25_Z = 21.3;
 WALL_SIZE = 1.5;
 TAB_X = 5.75;
@@ -160,8 +160,7 @@ module Top() {
 
 rendering = "full";
 if (rendering == "full") {
-  rotate([90, 0, 0])
-    Bottom();
+  pmcase();
 }
 
 if (rendering == "top") {
