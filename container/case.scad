@@ -27,18 +27,6 @@ module leftCutout() {
     square(size = [WALL_SIZE, JST_WIDTH]);
 }
 
-module rightCutout() {
-  translate([PM25_X, BRIM, -WALL_SIZE])
-    linear_extrude(PM25_Z + PCB_THICKNESS + PCB_SPACER + WS2)
-    square(size = [WALL_SIZE, PM25_Y - (2 * BRIM)]);
-}
-
-module bottomCutout() {
-  translate([-WALL_SIZE, BRIM, -WALL_SIZE])
-    linear_extrude(WALL_SIZE)
-    square(size = [PM25_X + WS2, PM25_Y - (2 * BRIM)]);
-}
-
 module pcbCutout() {
   translate([TAB_X, 0, PM25_Z])
     linear_extrude(PCB_SPACER + PCB_THICKNESS + WALL_SIZE)
@@ -83,9 +71,16 @@ module fanCutOut() {
     }
 }
 
-module pmcutout() {
+module portCutOut() {
   port_d = 2.45;
 
+  translate([PM25_X, 6 - (port_d / 2), PM25_Z - (4.2 - port_d)])
+    rotate([0, 90, 0])
+    linear_extrude(WALL_SIZE)
+    square(size = [port_d, 12.0 + port_d]);
+}
+
+module connectorCutOut() {
   jst_height = 4.9;
   jst_len = 17;
   translate([-WALL_SIZE, PM25_Y - jst_len - 5.5, (PM25_Z / 2) + jst_height / 2])
@@ -93,15 +88,9 @@ module pmcutout() {
     color("blue")
     linear_extrude(WALL_SIZE)
     square(size = [jst_height, jst_len]);
+}
 
-  fanCutOut();
-
-  translate([PM25_X, 6 - (port_d / 2), PM25_Z - (4.2 - port_d)])
-    rotate([0, 90, 0])
-    color("green")
-    linear_extrude(WALL_SIZE)
-    square(size = [port_d, 12.0 + port_d]);
-
+module pmcutout() {
   linear_extrude(PM25_Z)
     square(size = [PM25_X, PM25_Y]);
 }
@@ -113,11 +102,17 @@ module pmcase() {
         translate([-WALL_SIZE, -WALL_SIZE, -WALL_SIZE])
           linear_extrude(PM25_Z + WS2 + PCB_SPACER + PCB_THICKNESS)
           square(size = [PM25_X + WS2, PM25_Y + WS2]);
+
+        // These cutouts model the PM 2.5 sensor
         pmcutout();
         pcbCutout();
-        //bottomCutout();
+        fanCutOut();
+        portCutOut();
+        connectorCutOut();
+
+        // This removes most of the side of the PM 2.5 sensor so we can
+        // run a cable gutter on the side.
         leftCutout();
-        //rightCutout();
       }
     translate([-(CABLE_BOX_X + WALL_SIZE), 0, 0])
       cablecase();
