@@ -1,3 +1,5 @@
+include <grid.scad>;
+
 PM25_X = 38.4;
 PM25_Y = 50.2;
 PM25_Z = 21.4;
@@ -16,6 +18,19 @@ JST_WIDTH = 11;
 CABLE_SPACE = 2;
 
 WS2 = WALL_SIZE * 2;
+
+// Space required above the PCB
+ABOVE_PCB = 15;
+
+BMP_BREAKOUT_X = 14;
+BMP_BREAKOUT_Y = 11;
+
+USB_X = 9;
+USB_Z = 5.6 - PCB_THICKNESS;
+
+LID_X = CABLE_BOX_X + PM25_X + WALL_SIZE;
+LID_Y = PM25_Y;
+LID_Z = ABOVE_PCB;
 
 module leftCutout() {
   translate([-WALL_SIZE, BRIM, 0])
@@ -95,7 +110,11 @@ module pmcutout() {
     square(size = [PM25_X, PM25_Y]);
 }
 
-module pmcase() {
+module pmcase(lid = false) {
+  if (lid) {
+    translate([0, 0, PM25_Z + PCB_SPACER + PCB_THICKNESS + WALL_SIZE])
+      Lid();
+  }
   translate([CABLE_BOX_X + WALL_SIZE, 0, 0]) {
     translate([WALL_SIZE, WALL_SIZE, WALL_SIZE])
       difference() {
@@ -139,51 +158,99 @@ module cablecase() {
   }
 }
 
-module Bottom() {
-  difference() {
-    pmcase();
-
-    translate([CABLE_BOX_X + WALL_SIZE, (BIG_VENT_CENTER + WALL_SIZE), 0])
-      color("blue")
-      linear_extrude(PM25_Z + WS2 + PCB_SPACER + PCB_THICKNESS)
-      square(size = [PM25_X + WS2, (PM25_Y - BIG_VENT_CENTER + WALL_SIZE)]);
-
+module BottomSlice() {
+    text_height = 2;
     translate([0, JST_DISTANCE_FROM_EDGE + WALL_SIZE + JST_WIDTH, 0])
-      linear_extrude(PM25_Z + WS2 + PCB_SPACER + PCB_THICKNESS)
-      square(size = [CABLE_BOX_X + WS2, PM25_Y + WS2]);
-
-  }
+    linear_extrude(PM25_Z + PCB_SPACER + PCB_THICKNESS + WS2 + LID_Z + text_height)
+      square(size = [LID_X + WS2, PM25_Y + WS2]);
 }
 
-module TopSlice() {
-    translate([CABLE_BOX_X + WS2, 0, 0])
-      color("blue")
-      linear_extrude(PM25_Z + WS2 + PCB_SPACER + PCB_THICKNESS)
-      square(size = [PM25_X + WALL_SIZE, BIG_VENT_CENTER + WALL_SIZE]);
-
-      linear_extrude(PM25_Z + WS2 + PCB_SPACER + PCB_THICKNESS)
-      square(size = [CABLE_BOX_X + WS2, WALL_SIZE + JST_DISTANCE_FROM_EDGE + JST_WIDTH]);
-
-}
-
-module Top() {
+module Bottom(case = false) {
   difference() {
-    pmcase();
-    TopSlice();
+    pmcase(case);
+    BottomSlice();
   }
+}
+
+module Top(case = false) {
+  intersection() {
+    pmcase(case);
+    BottomSlice();
+  }
+}
+
+module BMPVentCutOut() {
+  header_y = 32.7;
+  header_x = CABLE_BOX_X + WALL_SIZE + 3.1;
+
+  translate([header_x - BMP_BREAKOUT_X, header_y, LID_Z])
+    linear_extrude(WALL_SIZE)
+    Grid(BMP_BREAKOUT_X, BMP_BREAKOUT_Y, inner_diameter = 2, grid_buffer = 1);
+}
+
+module USBCutOut() {
+  translate([CABLE_BOX_X + WALL_SIZE + (PM25_X / 2) - (USB_X / 2), 0, 0])
+  rotate([90, 0, 0])
+    linear_extrude(WALL_SIZE)
+    square(size = [USB_X, USB_Z]);
+}
+
+module SideVentCutOut() {
+  rotate([0, -90, 0])
+    linear_extrude(WALL_SIZE)
+    Grid(ABOVE_PCB, PM25_Y, inner_diameter = 2, grid_buffer = 1);
+}
+
+module LidCutOut() {
+  BMPVentCutOut();
+  USBCutOut();
+
+  // Right side vents
+  translate([LID_X + WALL_SIZE, 0, 0])
+    SideVentCutOut();
+
+  // Left side vents
+  SideVentCutOut();
+
+  rotate([0, -90, 0])
+    linear_extrude(WALL_SIZE)
+    Grid(ABOVE_PCB, PM25_Y, inner_diameter = 2, grid_buffer = 1);
+  rotate([0, -90, 0])
+    linear_extrude(WALL_SIZE)
+    Grid(ABOVE_PCB, PM25_Y, inner_diameter = 2, grid_buffer = 1);
+  linear_extrude(LID_Z)
+    square(size = [LID_X, PM25_Y]);
+}
+
+module Lid() {
+  translate([(LID_X + WS2) / 2, ((LID_Y + WS2) / 2) + 1, LID_Z + WALL_SIZE]) {
+    translate([10, 15, 0])
+    linear_extrude(0.5)
+      text(text = "0.5", valign = "center", halign = "center");
+    linear_extrude(1)
+      text(text = "1.0", valign = "center", halign = "center");
+  }
+
+  translate([WALL_SIZE, WALL_SIZE, 0])
+    difference() {
+      translate([-WALL_SIZE, -WALL_SIZE, 0])
+        linear_extrude(LID_Z + WALL_SIZE)
+        square(size = [LID_X + WS2, LID_Y + WS2]);
+      LidCutOut();
+    }
 }
 
 rendering = "full";
 if (rendering == "full") {
-  pmcase();
+    pmcase(true);
 }
 
 if (rendering == "top") {
   rotate([270, 0, 0])
-    Top();
+    Top(case = true);
 }
 
 if (rendering == "bottom") {
   rotate([90, 0, 0])
-    Bottom();
+    Bottom(case = true);
 }
