@@ -10,6 +10,8 @@ PCB_SPACER = 2;
 PCB_THICKNESS = 1.8;
 BRIM = TAB_X;
 CABLE_BOX_X = 13;
+CABLE_BOX_Y = PM25_Y;
+CABLE_BOX_Z = PM25_Z + PCB_SPACER + PCB_THICKNESS - WALL_SIZE;
 BIG_VENT_CENTER = 35.9;
 
 // JST cable cutout
@@ -139,13 +141,21 @@ module pmcase(lid = false) {
 }
 
 module cablecaseCutout() {
-  height = PM25_Z + PCB_SPACER + PCB_THICKNESS - WALL_SIZE;
-  linear_extrude(height)
-    square(size = [CABLE_BOX_X, PM25_Y]);
+  linear_extrude(CABLE_BOX_Z)
+    square(size = [CABLE_BOX_X, CABLE_BOX_Y]);
 
-  translate([CABLE_BOX_X - CABLE_SPACE, JST_DISTANCE_FROM_EDGE, height])
+  translate([CABLE_BOX_X - CABLE_SPACE, JST_DISTANCE_FROM_EDGE, CABLE_BOX_Z])
     linear_extrude(WALL_SIZE)
     square(size = [CABLE_SPACE, JST_WIDTH]);
+}
+
+module cableCaseText() {
+  text_depth = 0.2;
+  text_size = 10;
+  translate([(CABLE_BOX_X / 2) + (text_size / 2) - 1, CABLE_BOX_Y / 2, CABLE_BOX_Z + WALL_SIZE - text_depth])
+    rotate([0, 0, 90])
+    linear_extrude(text_depth)
+    text("TendAir", size = text_size, halign="center");
 }
 
 module cablecase() {
@@ -154,7 +164,9 @@ module cablecase() {
     translate([-WALL_SIZE, -WALL_SIZE, -WALL_SIZE])
       linear_extrude(PM25_Z + PCB_SPACER + PCB_THICKNESS + WALL_SIZE)
       square(size = [CABLE_BOX_X + WALL_SIZE, PM25_Y + WS2]);
+
     cablecaseCutout();
+    cableCaseText();
   }
 }
 
@@ -241,16 +253,19 @@ module Lid() {
 }
 
 rendering = "full";
+lid = "disabled";
+should_lid = lid == "enabled" ? true : false;
+
 if (rendering == "full") {
-    pmcase(true);
+    pmcase(should_lid);
 }
 
 if (rendering == "top") {
   rotate([270, 0, 0])
-    Top(case = true);
+    Top(should_lid);
 }
 
 if (rendering == "bottom") {
   rotate([90, 0, 0])
-    Bottom(case = true);
+    Bottom(should_lid);
 }
