@@ -312,13 +312,12 @@ void loop() {
   }
 
   server.handleClient();
-  client.loop();
-  server.handleClient();
   ArduinoOTA.handle();
 
   /* If there is more than one packet in the buffer we only want the most recent */
   while (Serial.available() > 32) {
     Serial.read();
+    pms5003.reset_input();
   }
 
   while (Serial.available()) {
@@ -335,8 +334,6 @@ void loop() {
       Serial.flush();
       Serial.swap();
     }
-
-    pms5003.reset_input();
   }
 
   static unsigned long last_time_measurement = 0;
