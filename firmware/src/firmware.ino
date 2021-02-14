@@ -110,17 +110,39 @@ Config config;
 typedef StaticJsonDocument<512> ConfigJsonDocument;
 
 static void loadConfigurationFromDoc(Config &config, ConfigJsonDocument &doc) {
-  config.name = doc["name"].as<String>();
-  config.mqtt_server = doc["mqtt_server"].as<String>();
-  config.mqtt_port = doc["mqtt_port"].as<String>().toInt();
-  config.mqtt_prefix = doc["mqtt_prefix"].as<String>();
+  if (doc["mqtt_server"])
+    config.mqtt_server = doc["mqtt_server"].as<String>();
 
-  if (!config.mqtt_port) {
-    config.mqtt_port = 1883;
-  }
+  if (doc["mqtt_port"])
+    config.mqtt_port = doc["mqtt_port"].as<String>().toInt();
+
+  if (doc["mqtt_prefix"])
+    config.mqtt_prefix = doc["mqtt_prefix"].as<String>();
 }
 
+#ifndef NODE_NAME
+#define NODE_NAME "esp8266aq"
+#endif
+
+#ifndef MQTT_SERVER
+#define MQTT_SERVER ""
+#endif
+
+#ifndef MQTT_PORT
+#define MQTT_PORT 1833
+#endif
+
+#ifndef MQTT_PREFIX
+#define MQTT_PREFIX "esp8266aq"
+#endif
+
 void loadConfiguration(Config &config) {
+  /* Load defaults */
+  config.name = NODE_NAME;
+  config.mqtt_server = MQTT_SERVER;
+  config.mqtt_port = MQTT_PORT;
+  config.mqtt_prefix = MQTT_PREFIX;
+
   if (LittleFS.exists("config.json")) {
     File file = LittleFS.open("config.json", "r");
 
@@ -135,11 +157,6 @@ void loadConfiguration(Config &config) {
     file.close();
   }
 
-  /* Load defaults */
-  config.name = "esp8266aq";
-  config.mqtt_server = "";
-  config.mqtt_port = 0;
-  config.mqtt_prefix = "esp8266aq";
 }
 
 void configModeCallback(WiFiManager *myWiFiManager) {
@@ -252,6 +269,14 @@ void setup() {
   }
   LittleFS.begin();
   loadConfiguration(config);
+  Serial.print("Node name: ");
+  Serial.println(config.name);
+  Serial.print("MQTT Server: ");
+  Serial.println(config.mqtt_server);
+  Serial.print("MQTT Port: ");
+  Serial.println(config.mqtt_port);
+  Serial.print("MQTT Prefix: ");
+  Serial.println(config.mqtt_prefix);
   ArduinoOTA.begin();
 
   Serial.flush();
@@ -267,18 +292,36 @@ void setup() {
   server.begin();
 }
 
+IPAddress address;
+
 void mqtt_reconnect() {
   static unsigned long last_attempt = 0;
   if (millis() - last_attempt < 5000) {
     return;
   }
 
+  last_attempt = millis();
+  Serial.swap();
   if (config.mqtt_server.length() && config.mqtt_port) {
-    client.setServer(config.mqtt_server.c_str(), config.mqtt_port);
+    if (WiFi.hostByName(config.mqtt_server.c_str(), address)) {
+      client.setServer(address, config.mqtt_port);
+      String clientId = config.name;
+      if(client.connect(clientId.c_str())) {
+        Serial.println("Connected\n");
+      } else {
+        Serial.println(clientId);
+        Serial.println(address);
+        Serial.print("failed, rc=");
+        Serial.println(client.state());
+      }
+    } else {
+      Serial.print("Couldn't find address: ");
+      Serial.println(config.mqtt_server);
+    }
 
-    String clientId = config.name;
-    client.connect(clientId.c_str());
   }
+  Serial.flush();
+  Serial.swap();
 }
 
 void mqtt_publish(const char *topic, const char *format, ...) {
@@ -304,13 +347,6 @@ void loop() {
     mqtt_reconnect();
   }
 
-  if (!client.connected()) {
-    Serial.swap();
-    Serial.println("MQTT client is not connected");
-    Serial.flush();
-    Serial.swap();
-  }
-
   server.handleClient();
   ArduinoOTA.handle();
 
@@ -325,6 +361,11 @@ void loop() {
 
     if (pms5003.is_valid_packet()) {
       Serial.swap();
+
+      if (!client.connected()) {
+        Serial.println("MQTT client is not connected");
+      }
+
       for(int i = 0; i < NUM_MEASUREMENTS_PMS5003; i++) {
         unsigned int value = pms5003.get_value(i);
 
