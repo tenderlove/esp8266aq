@@ -378,7 +378,7 @@ void loop() {
   }
 
   static unsigned long last_time_measurement = 0;
-  if(millis() - last_time_measurement > 5000){
+  if(millis() - last_time_measurement > 1000){
     last_time_measurement = millis();
 
     int temperature = round(bme.readTemperature() * 100);
