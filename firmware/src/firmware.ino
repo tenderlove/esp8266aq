@@ -101,6 +101,8 @@ struct Config {
   String mqtt_server;
   unsigned int mqtt_port;
   String mqtt_prefix;
+  String mqtt_username;
+  String mqtt_password;
 };
 
 Config config;
@@ -112,6 +114,8 @@ static void loadConfigurationFromDoc(Config &config, ConfigJsonDocument &doc) {
   config.mqtt_server = doc["mqtt_server"].as<String>();
   config.mqtt_port = doc["mqtt_port"].as<String>().toInt();
   config.mqtt_prefix = doc["mqtt_prefix"].as<String>();
+  config.mqtt_username = doc["mqtt_username"].as<String>();
+  config.mqtt_password = doc["mqtt_password"].as<String>();
 
   if (!config.mqtt_port) {
     config.mqtt_port = 1883;
@@ -138,6 +142,8 @@ void loadConfiguration(Config &config) {
   config.mqtt_server = "";
   config.mqtt_port = 0;
   config.mqtt_prefix = "esp8266aq";
+  config.mqtt_username = "";
+  config.mqtt_password = "";
 }
 
 String getContentType(String filename) {
@@ -262,7 +268,16 @@ void mqtt_reconnect() {
     client.setServer(config.mqtt_server.c_str(), config.mqtt_port);
 
     String clientId = config.name;
-    client.connect(clientId.c_str());
+    const char *username = NULL;
+    const char *password = NULL;
+    if (config.mqtt_username.length()) {
+      username = config.mqtt_username.c_str();
+    }
+    if (config.mqtt_password.length()) {
+      password = config.mqtt_password.c_str();
+    }
+
+    client.connect(clientId.c_str(), username, password);
   }
 }
 
