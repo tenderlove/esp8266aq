@@ -7,32 +7,88 @@
 #include <ArduinoOTA.h>
 #include <ArduinoJson.h>
 
+#ifndef NODE_NAME
+#define NODE_NAME "esp8266aq"
+#endif
+
+#ifndef MQTT_SERVER
+#define MQTT_SERVER ""
+#endif
+
+#ifndef MQTT_PORT
+#define MQTT_PORT 1833
+#endif
+
+#ifndef MQTT_PREFIX
+#define MQTT_PREFIX "esp8266aq"
+#endif
+
+#define G2_PIN 14
+#define G3_PIN 12
+
 Adafruit_BME280 bme;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
 ESP8266WebServer server(80);
 
-#define LED_PIN 2
-#define G2_PIN 14
-#define G3_PIN 12
+struct Config {
+  String name;
+
+  String mqtt_server;
+  unsigned int mqtt_port;
+  String mqtt_prefix;
+  IPAddress address;
+};
+
+Config config;
 
 struct Measurement {
   const char *name;
   const int scale;
+  Config * cfg;
 
   unsigned long last_measured_at;
+  const char * last_prefix;
   int last_value;
+  char full_topic[256];
 
-  Measurement(const char *name, int scale = 0):
+  Measurement(const char *name, int scale = 0, Config * cfg = &config):
     name(name),
     scale(scale),
+    cfg(cfg),
     last_measured_at(0),
+    last_prefix(NULL),
     last_value(0) {};
 
   void record(int value) {
     last_value = value;
     last_measured_at = millis();
+  }
+
+  const char * topic(void) {
+    const char * prefix = cfg->mqtt_prefix.c_str();
+    if (last_prefix != prefix) {
+      last_prefix = prefix;
+      memset(full_topic, 0, 256);
+      sprintf(full_topic, "%s/%s", last_prefix, name);
+    }
+
+    return full_topic;
+  }
+
+  void publish(PubSubClient * client, unsigned int value) {
+    char formatted_value[256];
+    record(value);
+    sprintf(formatted_value, "%u", value);
+    client->publish(topic(), formatted_value);
+  }
+
+  void publish_float(PubSubClient * client, int value) {
+    char formatted_value[256];
+    record(value);
+    sprintf(formatted_value, "%u.%.2u", value / 100, value % 100);
+    client->publish(topic(), formatted_value);
   }
 };
 
@@ -97,16 +153,6 @@ struct PMS5003 {
 
 PMS5003 pms5003;
 
-struct Config {
-  String name;
-
-  String mqtt_server;
-  unsigned int mqtt_port;
-  String mqtt_prefix;
-};
-
-Config config;
-
 typedef StaticJsonDocument<512> ConfigJsonDocument;
 
 static void loadConfigurationFromDoc(Config &config, ConfigJsonDocument &doc) {
@@ -119,22 +165,6 @@ static void loadConfigurationFromDoc(Config &config, ConfigJsonDocument &doc) {
   if (doc["mqtt_prefix"])
     config.mqtt_prefix = doc["mqtt_prefix"].as<String>();
 }
-
-#ifndef NODE_NAME
-#define NODE_NAME "esp8266aq"
-#endif
-
-#ifndef MQTT_SERVER
-#define MQTT_SERVER ""
-#endif
-
-#ifndef MQTT_PORT
-#define MQTT_PORT 1833
-#endif
-
-#ifndef MQTT_PREFIX
-#define MQTT_PREFIX "esp8266aq"
-#endif
 
 void loadConfiguration(Config &config) {
   /* Load defaults */
@@ -247,6 +277,24 @@ void webHandleUpdateConfig() {
   ESP.restart();
 }
 
+void webHandleReadConfig() {
+  String json;
+  json.reserve(1024);
+
+  json += "{\"name\": \"";
+  json += config.name;
+  json += "\", \"mqtt_server\": \"";
+  json += config.mqtt_server;
+  json += "\", \"mqtt_port\": \"";
+  json += config.mqtt_port;
+  json += "\", \"mqtt_prefix\": \"";
+  json += config.mqtt_prefix;
+  json += "\"}";
+
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  server.send(200, "application/json", json);
+}
+
 void setup() {
   WiFiManager wifiManager;
 
@@ -277,12 +325,16 @@ void setup() {
   Serial.println(config.mqtt_port);
   Serial.print("MQTT Prefix: ");
   Serial.println(config.mqtt_prefix);
+  Serial.print("GPIO: ");
+  Serial.print(digitalRead(G2_PIN));
+  Serial.println(digitalRead(G3_PIN));
   ArduinoOTA.begin();
 
   Serial.flush();
   Serial.swap(); // Switch to sensor
 
   server.on("/config.json", HTTP_POST, webHandleUpdateConfig);
+  server.on("/config.json", HTTP_GET, webHandleReadConfig);
   server.on("/status.json", HTTP_GET, webHandleStatus);
   server.onNotFound([]() {
     if (!handleFileRead(server.uri()))
@@ -291,8 +343,6 @@ void setup() {
 
   server.begin();
 }
-
-IPAddress address;
 
 void mqtt_reconnect() {
   static unsigned long last_attempt = 0;
@@ -303,14 +353,14 @@ void mqtt_reconnect() {
   last_attempt = millis();
   Serial.swap();
   if (config.mqtt_server.length() && config.mqtt_port) {
-    if (WiFi.hostByName(config.mqtt_server.c_str(), address)) {
-      client.setServer(address, config.mqtt_port);
+    if (WiFi.hostByName(config.mqtt_server.c_str(), config.address)) {
+      client.setServer(config.address, config.mqtt_port);
       String clientId = config.name;
       if(client.connect(clientId.c_str())) {
         Serial.println("Connected\n");
       } else {
         Serial.println(clientId);
-        Serial.println(address);
+        Serial.println(config.address);
         Serial.print("failed, rc=");
         Serial.println(client.state());
       }
@@ -322,22 +372,6 @@ void mqtt_reconnect() {
   }
   Serial.flush();
   Serial.swap();
-}
-
-void mqtt_publish(const char *topic, const char *format, ...) {
-  char full_topic[256];
-  char value[256];
-  sprintf(full_topic, "%s/%s", config.mqtt_prefix.c_str(), topic);
-
-  va_list args;
-  va_start(args, format);
-  vsprintf(value, format, args);
-  va_end(args);
-
-  Serial.print(full_topic);
-  Serial.print(" ");
-  Serial.println(value);
-  client.publish(full_topic, value, true);
 }
 
 void loop() {
@@ -360,20 +394,18 @@ void loop() {
     pms5003.process_byte(Serial.read());
 
     if (pms5003.is_valid_packet()) {
-      Serial.swap();
-
       if (!client.connected()) {
+        Serial.swap();
         Serial.println("MQTT client is not connected");
+        Serial.flush();
+        Serial.swap();
       }
 
       for(int i = 0; i < NUM_MEASUREMENTS_PMS5003; i++) {
         unsigned int value = pms5003.get_value(i);
 
-        measurements_pms5003[i].record(value);
-        mqtt_publish(measurements_pms5003[i].name, "%u", value);
+        measurements_pms5003[i].publish(&client, value);
       }
-      Serial.flush();
-      Serial.swap();
     }
   }
 
@@ -384,12 +416,7 @@ void loop() {
     int temperature = round(bme.readTemperature() * 100);
     int humidity = round(bme.readHumidity() * 100);
 
-    measurement_temperature.record(temperature);
-    measurement_humidity.record(humidity);
-    Serial.swap();
-    mqtt_publish("temperature", "%u.%.2u", temperature / 100, temperature % 100);
-    mqtt_publish("humidity",    "%u.%.2u", humidity    / 100, humidity    % 100);
-    Serial.flush();
-    Serial.swap();
+    measurement_temperature.publish_float(&client, temperature);
+    measurement_humidity.publish_float(&client, humidity);
   }
 }
