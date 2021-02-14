@@ -386,7 +386,10 @@ void loop() {
 
     measurement_temperature.record(temperature);
     measurement_humidity.record(humidity);
+    Serial.swap();
     mqtt_publish("temperature", "%u.%.2u", temperature / 100, temperature % 100);
     mqtt_publish("humidity",    "%u.%.2u", humidity    / 100, humidity    % 100);
+    Serial.flush();
+    Serial.swap();
   }
 }
