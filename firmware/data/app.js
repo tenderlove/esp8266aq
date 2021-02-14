@@ -33,6 +33,8 @@ function applyData(data) {
 
 async function updateData() {
   let response = await fetch(status_url);
+  setTimeout(updateData, 5000);
+
   let data = await response.json();
 
   applyData(data);
@@ -76,7 +78,7 @@ async function setupForm() {
 }
 
 window.addEventListener('load', (event) => {
-  setInterval(updateData, 1000);
-
   setupForm();
+
+  setTimeout(updateData, 1);
 });
