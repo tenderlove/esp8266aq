@@ -259,7 +259,7 @@ void setup() {
 
 void mqtt_reconnect() {
   static unsigned long last_attempt = 0;
-  if (millis() - last_attempt < 5000) {
+  if (millis() - last_attempt < 30000) {
     return;
   }
   last_attempt = millis();
