@@ -6,6 +6,7 @@
 #include <LittleFS.h>
 #include <ArduinoOTA.h>
 #include <ArduinoJson.h>
+#include <math.h>
 
 #ifndef NODE_NAME
 #define NODE_NAME "esp8266aq"
@@ -94,6 +95,7 @@ struct Measurement {
 
 Measurement measurement_temperature("temperature", 100);
 Measurement measurement_humidity("humidity", 100);
+Measurement measurement_dewpoint("dewpoint", 100);
 
 #define NUM_MEASUREMENTS_PMS5003 12
 Measurement measurements_pms5003[NUM_MEASUREMENTS_PMS5003] = {
@@ -413,10 +415,19 @@ void loop() {
   if(millis() - last_time_measurement > 1000){
     last_time_measurement = millis();
 
-    int temperature = round(bme.readTemperature() * 100);
-    int humidity = round(bme.readHumidity() * 100);
+    float temp = bme.readTemperature();
+    float rh = bme.readHumidity();
+
+    // https://bmcnoldy.rsmas.miami.edu/humidity_conversions.pdf
+    float x = (17.625 * temp) / (243.04 + temp);
+    float l = log(rh / 100.0);
+    float dewpoint = 243.04 * (l + x) / (17.625 - l - x);
+
+    int temperature = round(temp * 100);
+    int humidity = round(rh * 100);
 
     measurement_temperature.publish_float(&client, temperature);
     measurement_humidity.publish_float(&client, humidity);
+    measurement_dewpoint.publish_float(&client, round(dewpoint * 100));
   }
 }
