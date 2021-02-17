@@ -150,22 +150,23 @@ module cablecaseCutout() {
 }
 
 module cableCaseText() {
-  text_depth = 0.2;
+  text_depth = 1;
   text_size = 10;
-  translate([(CABLE_BOX_X / 2) + (text_size / 2) - 1, CABLE_BOX_Y / 2, CABLE_BOX_Z + WALL_SIZE - text_depth])
+  translate([(CABLE_BOX_X / 2) + (text_size / 2) - 2, CABLE_BOX_Y / 2, CABLE_BOX_Z + WALL_SIZE])
     rotate([0, 0, 90])
     linear_extrude(text_depth)
     text("TendAir", size = text_size, halign="center");
 }
 
 module cablecase() {
-  translate([WALL_SIZE, WALL_SIZE, WALL_SIZE])
-  difference() {
-    translate([-WALL_SIZE, -WALL_SIZE, -WALL_SIZE])
-      linear_extrude(PM25_Z + PCB_SPACER + PCB_THICKNESS + WALL_SIZE)
-      square(size = [CABLE_BOX_X + WALL_SIZE, PM25_Y + WS2]);
+  translate([WALL_SIZE, WALL_SIZE, WALL_SIZE]) {
+    difference() {
+      translate([-WALL_SIZE, -WALL_SIZE, -WALL_SIZE])
+        linear_extrude(PM25_Z + PCB_SPACER + PCB_THICKNESS + WALL_SIZE)
+        square(size = [CABLE_BOX_X + WALL_SIZE, PM25_Y + WS2]);
 
-    cablecaseCutout();
+      cablecaseCutout();
+    }
     cableCaseText();
   }
 }
@@ -236,11 +237,8 @@ module LidCutOut() {
 
 module Lid() {
   translate([(LID_X + WS2) / 2, ((LID_Y + WS2) / 2) + 1, LID_Z + WALL_SIZE]) {
-    translate([10, 15, 0])
-    linear_extrude(0.5)
-      text(text = "0.5", valign = "center", halign = "center");
     linear_extrude(1)
-      text(text = "1.0", valign = "center", halign = "center");
+      text(text = "TendAir", valign = "center", halign = "center");
   }
 
   translate([WALL_SIZE, WALL_SIZE, 0])
