@@ -21,3 +21,15 @@ Here are the parts I used:
 * [4 pin header](https://www.digikey.com/product-detail/en/sullins-connector-solutions/PPTC041LFBN-RC/S7002-ND/810144) to plug in the BME280 breakout board [Europe](https://www.reichelt.nl/female-header-2-54mm-straight-1x4-bkl-10120946-p266671.html)
 * [MCP2221a](https://www.digikey.com/en/products/detail/microchip-technology/MCP2221A-I-P/6009296) for programming the ESP and serial communication
 * [2x JST SH 4 pin Vertical Connector](https://www.adafruit.com/product/4328). These are optional, they're just for future extension to the board
+* [IC Socket](https://www.digikey.com/en/products/detail/te-connectivity-amp-connectors/1-2199298-3/5022040) for mounting the MCP2221a
+
+## Assembly
+
+Some of these parts are surface mount parts and they can be somewhat tricky to solder.
+I recommend using a [flux pen](https://www.amazon.com/gp/product/B074J6R1KQ/) and [fine solder wire](https://www.amazon.com/gp/product/B071G1J3W6/).
+
+If you're using them, I recommend solding the two JST SH 4 pin connectors on
+first, followed by the Molex SMD connector.  Then do the ESP, and the USB
+connector.  The rest of the parts should be pretty easy to add, but I usually
+start with the lowest profile parts (like the resistors) then move on to the
+taller parts.
