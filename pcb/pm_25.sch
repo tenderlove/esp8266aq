@@ -73,7 +73,7 @@ Wire Wire Line
 Wire Wire Line
 	7250 3100 7250 3150
 $Comp
-L ESP8266:ESP-12F U3
+L pm_25-rescue:ESP-12F-ESP8266 U3
 U 1 1 600365AB
 P 8950 4200
 F 0 "U3" H 8950 4965 50  0000 C CNN
@@ -338,17 +338,6 @@ F 3 "" H 3350 5200 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Connector_Generic:Conn_01x04 J3
-U 1 1 600889C9
-P 5300 6100
-F 0 "J3" V 5264 5812 50  0000 R CNN
-F 1 "Qwiic" V 5173 5812 50  0000 R CNN
-F 2 "Connector_JST:JST_SH_BM04B-SRSS-TB_1x04-1MP_P1.00mm_Vertical" H 5300 6100 50  0001 C CNN
-F 3 "~" H 5300 6100 50  0001 C CNN
-	1    5300 6100
-	0    -1   -1   0   
-$EndComp
-$Comp
 L power:GND #PWR0113
 U 1 1 6008C9C3
 P 5050 6300
@@ -562,17 +551,6 @@ Wire Wire Line
 Wire Wire Line
 	6800 4600 6250 4600
 $Comp
-L Connector_Generic:Conn_01x04 J4
-U 1 1 600F9C93
-P 5350 6750
-F 0 "J4" V 5314 6462 50  0000 R CNN
-F 1 "Qwiic" V 5223 6462 50  0000 R CNN
-F 2 "Connector_JST:JST_SH_BM04B-SRSS-TB_1x04-1MP_P1.00mm_Vertical" H 5350 6750 50  0001 C CNN
-F 3 "~" H 5350 6750 50  0001 C CNN
-	1    5350 6750
-	0    -1   -1   0   
-$EndComp
-$Comp
 L power:GND #PWR0120
 U 1 1 600F9C99
 P 5100 6950
@@ -582,6 +560,23 @@ F 2 "" H 5100 6950 50  0001 C CNN
 F 3 "" H 5100 6950 50  0001 C CNN
 	1    5100 6950
 	1    0    0    -1  
+$EndComp
+Text Label 5450 6950 3    50   ~ 0
+SDA
+Text Label 5550 6950 3    50   ~ 0
+SCL
+Wire Wire Line
+	5250 6950 5100 6950
+$Comp
+L Connector_Generic:Conn_01x04 J3
+U 1 1 600889C9
+P 5300 6100
+F 0 "J3" V 5264 5812 50  0000 R CNN
+F 1 "Qwiic" V 5173 5812 50  0000 R CNN
+F 2 "Connector_JST:JST_SH_BM04B-SRSS-TB_1x04-1MP_P1.00mm_Vertical" H 5300 6100 50  0001 C CNN
+F 3 "~" H 5300 6100 50  0001 C CNN
+	1    5300 6100
+	0    -1   -1   0   
 $EndComp
 $Comp
 L power:+3.3V #PWR0121
@@ -594,10 +589,15 @@ F 3 "" H 5350 6950 50  0001 C CNN
 	1    5350 6950
 	-1   0    0    1   
 $EndComp
-Text Label 5450 6950 3    50   ~ 0
-SDA
-Text Label 5550 6950 3    50   ~ 0
-SCL
-Wire Wire Line
-	5250 6950 5100 6950
+$Comp
+L Connector_Generic:Conn_01x04 J4
+U 1 1 600F9C93
+P 5350 6750
+F 0 "J4" V 5314 6462 50  0000 R CNN
+F 1 "Qwiic" V 5223 6462 50  0000 R CNN
+F 2 "Connector_JST:JST_SH_BM04B-SRSS-TB_1x04-1MP_P1.00mm_Vertical" H 5350 6750 50  0001 C CNN
+F 3 "~" H 5350 6750 50  0001 C CNN
+	1    5350 6750
+	0    -1   -1   0   
+$EndComp
 $EndSCHEMATC

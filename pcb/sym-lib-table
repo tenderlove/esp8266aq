@@ -1,3 +1,4 @@
 (sym_lib_table
   (lib (name pm_25)(type Legacy)(uri ${KIPRJMOD}/pm_25.lib)(options "")(descr ""))
+  (lib (name pm_25-rescue)(type Legacy)(uri ${KIPRJMOD}/pm_25-rescue.lib)(options "")(descr ""))
 )
