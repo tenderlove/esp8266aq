@@ -24,6 +24,7 @@
 #define MQTT_PREFIX "esp8266aq"
 #endif
 
+#define LED_PIN 2
 #define G2_PIN 14
 #define G3_PIN 12
 
@@ -302,6 +303,8 @@ void setup() {
 
   pinMode(G2_PIN, INPUT);
   pinMode(G3_PIN, INPUT);
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(2, HIGH);
 
   Serial.begin(9600);
   wifiManager.setAPCallback(configModeCallback);
@@ -381,6 +384,12 @@ void loop() {
     client.loop();
   } else {
     mqtt_reconnect();
+  }
+
+  if (client.connected()) {
+    digitalWrite(LED_PIN, LOW); // LOW == ON
+  } else {
+    digitalWrite(LED_PIN, HIGH);
   }
 
   server.handleClient();
