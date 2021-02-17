@@ -1,4 +1,4 @@
-OPENSCAD = openscad
+OPENSCAD = /Applications/OpenSCAD.app/Contents/MacOS/OpenSCAD
 
 %.stl: case.scad
 	$(OPENSCAD) -D'rendering="$(basename $@)"' $< -o $@
