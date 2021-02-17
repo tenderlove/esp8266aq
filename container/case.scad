@@ -260,10 +260,20 @@ if (rendering == "full") {
 
 if (rendering == "top") {
   rotate([270, 0, 0])
-    Top(should_lid);
+    Top(false);
+}
+
+if (rendering == "top-with-lid") {
+  rotate([270, 0, 0])
+    Top(true);
 }
 
 if (rendering == "bottom") {
   rotate([90, 0, 0])
-    Bottom(should_lid);
+    Bottom(false);
+}
+
+if (rendering == "bottom-with-lid") {
+  rotate([90, 0, 0])
+    Bottom(true);
 }
