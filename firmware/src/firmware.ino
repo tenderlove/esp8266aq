@@ -7,6 +7,7 @@
 #include <ArduinoOTA.h>
 #include <ArduinoJson.h>
 #include <math.h>
+#include <ESP8266mDNS.h>
 
 #ifndef NODE_NAME
 #define NODE_NAME "esp8266aq"
@@ -333,6 +334,9 @@ void setup() {
   Serial.print("GPIO: ");
   Serial.print(digitalRead(G2_PIN));
   Serial.println(digitalRead(G3_PIN));
+
+  MDNS.begin(config.name);
+
   ArduinoOTA.begin();
 
   Serial.flush();
