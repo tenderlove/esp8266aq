@@ -16,6 +16,6 @@ flash:
 	$(RUBY) utils/prog.rb
 	BUILD_FLAGS=$(CFLAGS) platformio run -t upload
 
-uploadfs: env
+uploadfs:
 	$(RUBY) utils/prog.rb
 	platformio run -t uploadfs
