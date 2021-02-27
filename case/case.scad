@@ -24,8 +24,8 @@ WS2 = WALL_SIZE * 2;
 // Space required above the PCB
 ABOVE_PCB = 15;
 
-BMP_BREAKOUT_X = 14;
-BMP_BREAKOUT_Y = 11;
+BME_BREAKOUT_X = 14;
+BME_BREAKOUT_Y = 11;
 
 USB_X = 9;
 USB_Z = 5.6 - PCB_THICKNESS;
@@ -192,13 +192,13 @@ module Top(case = false) {
   }
 }
 
-module BMPVentCutOut() {
+module BMEVentCutOut() {
   header_y = 32.7;
   header_x = CABLE_BOX_X + WALL_SIZE + 3.1;
 
-  translate([header_x - BMP_BREAKOUT_X, header_y, LID_Z])
+  translate([header_x - BME_BREAKOUT_X, header_y, LID_Z])
     linear_extrude(WALL_SIZE)
-    Grid(BMP_BREAKOUT_X, BMP_BREAKOUT_Y, inner_diameter = 2, grid_buffer = 1);
+    Grid(BME_BREAKOUT_X, BME_BREAKOUT_Y, inner_diameter = 2, grid_buffer = 1);
 }
 
 module USBCutOut() {
@@ -215,7 +215,7 @@ module SideVentCutOut() {
 }
 
 module LidCutOut() {
-  BMPVentCutOut();
+  BMEVentCutOut();
   USBCutOut();
 
   // Right side vents
