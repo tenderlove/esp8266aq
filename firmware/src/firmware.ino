@@ -80,18 +80,38 @@ struct Measurement {
     return full_topic;
   }
 
-  void publish(PubSubClient * client, unsigned int value) {
+  void publish_int(PubSubClient * client) {
     char formatted_value[256];
-    record(value);
-    sprintf(formatted_value, "%u", value);
+    sprintf(formatted_value, "%u", last_value);
+    publish(client, formatted_value);
+  }
+
+  void publish_int(HardwareSerial * serial) {
+    char formatted_value[256];
+    sprintf(formatted_value, "%u", last_value);
+    publish(serial, formatted_value);
+  }
+
+  void publish_float(PubSubClient * client) {
+    char formatted_value[256];
+    sprintf(formatted_value, "%u.%.2u", last_value / 100, last_value % 100);
+    publish(client, formatted_value);
+  }
+
+  void publish_float(HardwareSerial * serial) {
+    char formatted_value[256];
+    sprintf(formatted_value, "%u.%.2u", last_value / 100, last_value % 100);
+    publish(serial, formatted_value);
+  }
+
+  void publish(PubSubClient * client, char * formatted_value) {
     client->publish(topic(), formatted_value);
   }
 
-  void publish_float(PubSubClient * client, int value) {
-    char formatted_value[256];
-    record(value);
-    sprintf(formatted_value, "%u.%.2u", value / 100, value % 100);
-    client->publish(topic(), formatted_value);
+  void publish(HardwareSerial * serial, char * formatted_value) {
+    serial->print(topic());
+    serial->print(": ");
+    serial->println(formatted_value);
   }
 };
 
@@ -419,7 +439,19 @@ void loop() {
       for(int i = 0; i < NUM_MEASUREMENTS_PMS5003; i++) {
         unsigned int value = pms5003.get_value(i);
 
-        measurements_pms5003[i].publish(&client, value);
+        measurements_pms5003[i].record(value);
+        measurements_pms5003[i].publish_int(&client);
+      }
+
+      // Publish to the serial client if G2 pin is HIGH
+      if (digitalRead(G2_PIN) == HIGH) {
+        Serial.flush();
+        Serial.swap();
+        for(int i = 0; i < NUM_MEASUREMENTS_PMS5003; i++) {
+          measurements_pms5003[i].publish_int(&Serial);
+        }
+        Serial.flush();
+        Serial.swap();
       }
     }
   }
@@ -439,8 +471,23 @@ void loop() {
     int temperature = round(temp * 100);
     int humidity = round(rh * 100);
 
-    measurement_temperature.publish_float(&client, temperature);
-    measurement_humidity.publish_float(&client, humidity);
-    measurement_dewpoint.publish_float(&client, round(dewpoint * 100));
+    measurement_temperature.record(temperature);
+    measurement_humidity.record(humidity);
+    measurement_dewpoint.record(round(dewpoint * 100));
+
+    measurement_temperature.publish_float(&client);
+    measurement_humidity.publish_float(&client);
+    measurement_dewpoint.publish_float(&client);
+
+    // Publish to the serial client if G2 pin is HIGH
+    if (digitalRead(G2_PIN) == HIGH) {
+      Serial.flush();
+      Serial.swap();
+      measurement_temperature.publish_float(&Serial);
+      measurement_humidity.publish_float(&Serial);
+      measurement_dewpoint.publish_float(&Serial);
+      Serial.flush();
+      Serial.swap();
+    }
   }
 }
