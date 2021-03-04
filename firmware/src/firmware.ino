@@ -53,7 +53,8 @@ struct Measurement {
 
   unsigned long last_measured_at;
   const char * last_prefix;
-  int last_value;
+  unsigned int last_value;
+  float last_float;
   char full_topic[256];
 
   Measurement(const char *name, int scale = 0, Config * cfg = &config):
@@ -64,8 +65,13 @@ struct Measurement {
     last_prefix(NULL),
     last_value(0) {};
 
-  void record(int value) {
+  void record(unsigned int value) {
     last_value = value;
+    last_measured_at = millis();
+  }
+
+  void record(float value) {
+    last_float = value;
     last_measured_at = millis();
   }
 
@@ -94,13 +100,13 @@ struct Measurement {
 
   void publish_float(PubSubClient * client) {
     char formatted_value[256];
-    sprintf(formatted_value, "%u.%.2u", last_value / 100, last_value % 100);
+    sprintf(formatted_value, "%.2f", last_float);
     publish(client, formatted_value);
   }
 
   void publish_float(HardwareSerial * serial) {
     char formatted_value[256];
-    sprintf(formatted_value, "%u.%.2u", last_value / 100, last_value % 100);
+    sprintf(formatted_value, "%.2f", last_float);
     publish(serial, formatted_value);
   }
 
@@ -468,12 +474,9 @@ void loop() {
     float l = log(rh / 100.0);
     float dewpoint = 243.04 * (l + x) / (17.625 - l - x);
 
-    int temperature = round(temp * 100);
-    int humidity = round(rh * 100);
-
-    measurement_temperature.record(temperature);
-    measurement_humidity.record(humidity);
-    measurement_dewpoint.record(round(dewpoint * 100));
+    measurement_temperature.record(temp);
+    measurement_humidity.record(rh);
+    measurement_dewpoint.record(dewpoint);
 
     measurement_temperature.publish_float(&client);
     measurement_humidity.publish_float(&client);
