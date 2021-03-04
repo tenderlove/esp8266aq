@@ -8,6 +8,7 @@
 #include <ArduinoJson.h>
 #include <math.h>
 #include <ESP8266mDNS.h>
+#include <measurement.h>
 
 #ifndef NODE_NAME
 #define NODE_NAME "esp8266aq"
@@ -35,110 +36,26 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 ESP8266WebServer server(80);
 
-struct Config {
-  String name;
-
-  String mqtt_server;
-  unsigned int mqtt_port;
-  String mqtt_prefix;
-  IPAddress address;
-};
-
 Config config;
 
-struct Measurement {
-  const char *name;
-  const int scale;
-  Config * cfg;
-
-  unsigned long last_measured_at;
-  const char * last_prefix;
-  unsigned int last_value;
-  float last_float;
-  char full_topic[256];
-
-  Measurement(const char *name, int scale = 0, Config * cfg = &config):
-    name(name),
-    scale(scale),
-    cfg(cfg),
-    last_measured_at(0),
-    last_prefix(NULL),
-    last_value(0) {};
-
-  void record(unsigned int value) {
-    last_value = value;
-    last_measured_at = millis();
-  }
-
-  void record(float value) {
-    last_float = value;
-    last_measured_at = millis();
-  }
-
-  const char * topic(void) {
-    const char * prefix = cfg->mqtt_prefix.c_str();
-    if (last_prefix != prefix) {
-      last_prefix = prefix;
-      memset(full_topic, 0, 256);
-      sprintf(full_topic, "%s/%s", last_prefix, name);
-    }
-
-    return full_topic;
-  }
-
-  void publish_int(PubSubClient * client) {
-    char formatted_value[256];
-    sprintf(formatted_value, "%u", last_value);
-    publish(client, formatted_value);
-  }
-
-  void publish_int(HardwareSerial * serial) {
-    char formatted_value[256];
-    sprintf(formatted_value, "%u", last_value);
-    publish(serial, formatted_value);
-  }
-
-  void publish_float(PubSubClient * client) {
-    char formatted_value[256];
-    sprintf(formatted_value, "%.2f", last_float);
-    publish(client, formatted_value);
-  }
-
-  void publish_float(HardwareSerial * serial) {
-    char formatted_value[256];
-    sprintf(formatted_value, "%.2f", last_float);
-    publish(serial, formatted_value);
-  }
-
-  void publish(PubSubClient * client, char * formatted_value) {
-    client->publish(topic(), formatted_value);
-  }
-
-  void publish(HardwareSerial * serial, char * formatted_value) {
-    serial->print(topic());
-    serial->print(": ");
-    serial->println(formatted_value);
-  }
-};
-
-Measurement measurement_temperature("temperature", 100);
-Measurement measurement_humidity("humidity", 100);
-Measurement measurement_dewpoint("dewpoint", 100);
+FloatMeasurement measurement_temperature("temperature", &config);
+FloatMeasurement measurement_humidity("humidity", &config);
+FloatMeasurement measurement_dewpoint("dewpoint", &config);
 
 #define NUM_MEASUREMENTS_PMS5003 12
-Measurement measurements_pms5003[NUM_MEASUREMENTS_PMS5003] = {
-  Measurement("pm1_0_standard"),
-  Measurement("pm2_5_standard"),
-  Measurement("pm10_standard"),
-  Measurement("pm1_0_env"),
-  Measurement("pm2_5_env"),
-  Measurement("concentration_unit"),
-  Measurement("particles_03um"),
-  Measurement("particles_05um"),
-  Measurement("particles_10um"),
-  Measurement("particles_25um"),
-  Measurement("particles_50um"),
-  Measurement("particles_100um")
+UnsignedIntMeasurement measurements_pms5003[NUM_MEASUREMENTS_PMS5003] = {
+  UnsignedIntMeasurement("pm1_0_standard", &config),
+  UnsignedIntMeasurement("pm2_5_standard", &config),
+  UnsignedIntMeasurement("pm10_standard", &config),
+  UnsignedIntMeasurement("pm1_0_env", &config),
+  UnsignedIntMeasurement("pm2_5_env", &config),
+  UnsignedIntMeasurement("concentration_unit", &config),
+  UnsignedIntMeasurement("particles_03um", &config),
+  UnsignedIntMeasurement("particles_05um", &config),
+  UnsignedIntMeasurement("particles_10um", &config),
+  UnsignedIntMeasurement("particles_25um", &config),
+  UnsignedIntMeasurement("particles_50um", &config),
+  UnsignedIntMeasurement("particles_100um", &config)
 };
 
 struct PMS5003 {
@@ -249,29 +166,15 @@ bool handleFileRead(String path) {
   return false;
 }
 
-void addMeasurementJson(String &json, Measurement &m) {
-  json += "{\"name\": \"";
-  json += m.name;
-  json += "\", \"value\": ";
-  if (m.scale) {
-    json += float(m.last_value) / m.scale;
-  } else {
-    json += m.last_value;
-  }
-  json += ", \"last_measured_at\": ";
-  json += m.last_measured_at;
-  json += "}, ";
-}
-
 void webHandleStatus() {
   String json;
   json.reserve(1024);
   json += "{\"measurements\": [";
 
-  addMeasurementJson(json, measurement_temperature);
-  addMeasurementJson(json, measurement_humidity);
+  measurement_temperature.publish(json);
+  measurement_humidity.publish(json);
   for(int i = 0; i < NUM_MEASUREMENTS_PMS5003; i++) {
-    addMeasurementJson(json, measurements_pms5003[i]);
+    measurements_pms5003[i].publish(json);
   }
   json.remove(json.lastIndexOf(",")); // remove trailing comma
 
@@ -446,7 +349,7 @@ void loop() {
         unsigned int value = pms5003.get_value(i);
 
         measurements_pms5003[i].record(value);
-        measurements_pms5003[i].publish_int(&client);
+        measurements_pms5003[i].publish(&client);
       }
 
       // Publish to the serial client if G2 pin is HIGH
@@ -454,7 +357,7 @@ void loop() {
         Serial.flush();
         Serial.swap();
         for(int i = 0; i < NUM_MEASUREMENTS_PMS5003; i++) {
-          measurements_pms5003[i].publish_int(&Serial);
+          measurements_pms5003[i].publish(&Serial);
         }
         Serial.flush();
         Serial.swap();
@@ -478,17 +381,17 @@ void loop() {
     measurement_humidity.record(rh);
     measurement_dewpoint.record(dewpoint);
 
-    measurement_temperature.publish_float(&client);
-    measurement_humidity.publish_float(&client);
-    measurement_dewpoint.publish_float(&client);
+    measurement_temperature.publish(&client);
+    measurement_humidity.publish(&client);
+    measurement_dewpoint.publish(&client);
 
     // Publish to the serial client if G2 pin is HIGH
     if (digitalRead(G2_PIN) == HIGH) {
       Serial.flush();
       Serial.swap();
-      measurement_temperature.publish_float(&Serial);
-      measurement_humidity.publish_float(&Serial);
-      measurement_dewpoint.publish_float(&Serial);
+      measurement_temperature.publish(&Serial);
+      measurement_humidity.publish(&Serial);
+      measurement_dewpoint.publish(&Serial);
       Serial.flush();
       Serial.swap();
     }
