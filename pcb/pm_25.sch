@@ -5,7 +5,7 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 1
 Title "PM-2.5 / Temp Wifi Sensor"
-Date "2021-01-16"
+Date "2021-03-09"
 Rev "v04"
 Comp ""
 Comment1 ""
@@ -439,8 +439,6 @@ F 3 "" H 3350 2250 50  0001 C CNN
 	1    3350 2250
 	1    0    0    -1  
 $EndComp
-NoConn ~ 3350 2450
-NoConn ~ 3350 2550
 NoConn ~ 3350 3350
 NoConn ~ 3350 3450
 $Comp
@@ -608,4 +606,56 @@ Wire Wire Line
 Wire Wire Line
 	7850 3400 8950 3400
 Connection ~ 8950 3400
+$Comp
+L Device:R R3
+U 1 1 60483EC3
+P 2050 5000
+F 0 "R3" H 2120 5046 50  0000 L CNN
+F 1 "5.1k" H 2120 4955 50  0000 L CNN
+F 2 "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal" V 1980 5000 50  0001 C CNN
+F 3 "~" H 2050 5000 50  0001 C CNN
+	1    2050 5000
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R R4
+U 1 1 60484D3B
+P 2450 5000
+F 0 "R4" H 2520 5046 50  0000 L CNN
+F 1 "5.1k" H 2520 4955 50  0000 L CNN
+F 2 "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal" V 2380 5000 50  0001 C CNN
+F 3 "~" H 2450 5000 50  0001 C CNN
+	1    2450 5000
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR0122
+U 1 1 604854A3
+P 2450 5150
+F 0 "#PWR0122" H 2450 4900 50  0001 C CNN
+F 1 "GND" H 2455 4977 50  0000 C CNN
+F 2 "" H 2450 5150 50  0001 C CNN
+F 3 "" H 2450 5150 50  0001 C CNN
+	1    2450 5150
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR0123
+U 1 1 604859C1
+P 2050 5150
+F 0 "#PWR0123" H 2050 4900 50  0001 C CNN
+F 1 "GND" H 2055 4977 50  0000 C CNN
+F 2 "" H 2050 5150 50  0001 C CNN
+F 3 "" H 2050 5150 50  0001 C CNN
+	1    2050 5150
+	1    0    0    -1  
+$EndComp
+Text Label 3350 2450 0    50   ~ 0
+CC1
+Text Label 3350 2550 0    50   ~ 0
+CC2
+Text Label 2050 4850 0    50   ~ 0
+CC1
+Text Label 2450 4850 0    50   ~ 0
+CC2
 $EndSCHEMATC
