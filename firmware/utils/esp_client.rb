@@ -101,6 +101,6 @@ class ESPClient
     chip.set_gpio_value ESP_PIN12, v
   end
 
-  alias gp3 esp_pin14
-  alias gp3= esp_pin14=
+  alias gp3 esp_pin12
+  alias gp3= esp_pin12=
 end
