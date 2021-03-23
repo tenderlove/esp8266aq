@@ -167,7 +167,7 @@ module cablecase() {
 
       cablecaseCutout();
     }
-    cableCaseText();
+    //cableCaseText();
   }
 }
 
@@ -235,11 +235,15 @@ module LidCutOut() {
     square(size = [LID_X, PM25_Y]);
 }
 
-module Lid() {
+module LidText() {
   translate([(LID_X + WS2) / 2, ((LID_Y + WS2) / 2) + 1, LID_Z + WALL_SIZE]) {
     linear_extrude(1)
       text(text = "TendAir", valign = "center", halign = "center");
   }
+}
+
+module Lid() {
+  //LidText();
 
   translate([WALL_SIZE, WALL_SIZE, 0])
     difference() {
@@ -248,6 +252,11 @@ module Lid() {
         square(size = [LID_X + WS2, LID_Y + WS2]);
       LidCutOut();
     }
+
+  // Heat isolation wall
+  translate([CABLE_BOX_X + WS2 + 7, WALL_SIZE, 0])
+    linear_extrude(LID_Z)
+    square(size = [WALL_SIZE, PM25_Y]);
 }
 
 rendering = "full";
