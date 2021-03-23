@@ -312,6 +312,41 @@ void mqtt_reconnect() {
   Serial.swap();
 }
 
+void readI2CSensors(void) {
+  static unsigned long last_time_measurement = 0;
+
+  if(millis() - last_time_measurement > 1000){
+    last_time_measurement = millis();
+
+    float temp = bme.readTemperature();
+    float rh = bme.readHumidity();
+
+    // https://bmcnoldy.rsmas.miami.edu/humidity_conversions.pdf
+    float x = (17.625 * temp) / (243.04 + temp);
+    float l = log(rh / 100.0);
+    float dewpoint = 243.04 * (l + x) / (17.625 - l - x);
+
+    measurement_temperature.record(temp);
+    measurement_humidity.record(rh);
+    measurement_dewpoint.record(dewpoint);
+
+    measurement_temperature.publish(&client);
+    measurement_humidity.publish(&client);
+    measurement_dewpoint.publish(&client);
+
+    // Publish to the serial client if G2 pin is HIGH
+    if (digitalRead(G2_PIN) == HIGH) {
+      Serial.flush();
+      Serial.swap();
+      measurement_temperature.publish(&Serial);
+      measurement_humidity.publish(&Serial);
+      measurement_dewpoint.publish(&Serial);
+      Serial.flush();
+      Serial.swap();
+    }
+  }
+}
+
 void loop() {
   if (client.connected()) {
     client.loop();
@@ -365,35 +400,5 @@ void loop() {
     }
   }
 
-  static unsigned long last_time_measurement = 0;
-  if(millis() - last_time_measurement > 1000){
-    last_time_measurement = millis();
-
-    float temp = bme.readTemperature();
-    float rh = bme.readHumidity();
-
-    // https://bmcnoldy.rsmas.miami.edu/humidity_conversions.pdf
-    float x = (17.625 * temp) / (243.04 + temp);
-    float l = log(rh / 100.0);
-    float dewpoint = 243.04 * (l + x) / (17.625 - l - x);
-
-    measurement_temperature.record(temp);
-    measurement_humidity.record(rh);
-    measurement_dewpoint.record(dewpoint);
-
-    measurement_temperature.publish(&client);
-    measurement_humidity.publish(&client);
-    measurement_dewpoint.publish(&client);
-
-    // Publish to the serial client if G2 pin is HIGH
-    if (digitalRead(G2_PIN) == HIGH) {
-      Serial.flush();
-      Serial.swap();
-      measurement_temperature.publish(&Serial);
-      measurement_humidity.publish(&Serial);
-      measurement_dewpoint.publish(&Serial);
-      Serial.flush();
-      Serial.swap();
-    }
-  }
+  readI2CSensors();
 }

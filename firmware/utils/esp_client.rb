@@ -27,14 +27,19 @@ class ESPClient
     @chip = chip
   end
 
+  def i2c_on address
+    @chip.i2c_on address
+  end
+
   # Make sure the power-up settings for the MCP are correct
   def ensure_pin_settings
     new_settings = check_gp_settings @chip.gp_settings
     if new_settings
       @chip.gp_settings = new_settings
-      4.times do |i|
-        chip.set_gpio_value i, (PIN_VALUE_BITMASK >> i) & 0x1
-      end
+    end
+
+    4.times do |i|
+      chip.set_gpio_value i, (PIN_VALUE_BITMASK >> i) & 0x1
     end
   end
 
