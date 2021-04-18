@@ -9,6 +9,7 @@
 #include <math.h>
 #include <ESP8266mDNS.h>
 #include <measurement.h>
+#include <tp6703.h>
 
 #ifndef NODE_NAME
 #define NODE_NAME "esp8266aq"
@@ -57,6 +58,8 @@ UnsignedIntMeasurement measurements_pms5003[NUM_MEASUREMENTS_PMS5003] = {
   UnsignedIntMeasurement("particles_50um", &config),
   UnsignedIntMeasurement("particles_100um", &config)
 };
+
+UnsignedIntMeasurement measurement_co2("co2", &config);
 
 struct PMS5003 {
   byte input_string[32];
@@ -334,6 +337,12 @@ void readI2CSensors(void) {
     measurement_humidity.publish(&client);
     measurement_dewpoint.publish(&client);
 
+    int co2 = readCO2();
+    if (co2 > 0) {
+      measurement_co2.record(co2);
+      measurement_co2.publish(&client);
+    }
+
     // Publish to the serial client if G2 pin is HIGH
     if (digitalRead(G2_PIN) == HIGH) {
       Serial.flush();
@@ -341,6 +350,9 @@ void readI2CSensors(void) {
       measurement_temperature.publish(&Serial);
       measurement_humidity.publish(&Serial);
       measurement_dewpoint.publish(&Serial);
+      if (co2 > 0) {
+        measurement_co2.publish(&Serial);
+      }
       Serial.flush();
       Serial.swap();
     }
