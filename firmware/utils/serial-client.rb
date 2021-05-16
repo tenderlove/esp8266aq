@@ -13,10 +13,11 @@ begin
     esp.gp2 ^= 1
   end
 
-  UART.open '/dev/cu.usbmodem1441101' do |serial|
+  UART.open '/dev/cu.usbmodem1441201' do |serial|
     loop do
       serial.wait_readable
-      puts serial.readline
+      line = serial.readline
+      puts line
     end
   end
 
