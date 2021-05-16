@@ -1,0 +1,12 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    influxdb (0.8.1)
+    mqtt (0.5.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  influxdb
+  mqtt

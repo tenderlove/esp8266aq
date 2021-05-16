@@ -1,0 +1,116 @@
+<html>
+  <head>
+    <meta charset="UTF-8">
+
+    <title>ESP8266 Air Quality</title>
+    <script src='app.js'></script>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        color: #333;
+      }
+      h1 {
+        font-size: 7vw;
+      }
+      .content {
+        margin: auto;
+        max-width: 1024;
+      }
+      .title {
+        text-align: center;
+      }
+      details > summary {
+        display: list-item;
+        cursor: pointer;
+      }
+
+      .summary-table {
+        display: grid;
+        font-size: 5vw;
+        text-align: center;
+        grid-template-columns: auto auto auto;
+      }
+
+      .summary-table .cell:not(.connected) {
+        filter: grayscale(1);
+      }
+      .summary-table .cell:not(.connected) .value {
+        visibility: hidden;
+      }
+
+      .summary-table .description {
+        color: #666;
+        font-size: 30%;
+      }
+
+      .summary-table .emoji {
+        font-size: 8vw;
+      }
+
+      .summary-table .unit {
+        color: #aaa;
+      }
+      .summary-table .pm25 .unit {
+        font-size: 50%;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="content">
+      <h1 class="title">ESP8266 Air Quality</h1>
+
+      <div class="summary-table">
+        <div class="cell temperature js-temperature">
+          <div class="emoji">🌡️</div>
+          <div class="description">Temperature</div>
+          <div class="value"><span class="js-value"></span><span class=unit>°C</span></div>
+        </div>
+        <div class="cell humidity js-humidity">
+          <div class="emoji">🌧️</div>
+          <div class="description">Humidity</div>
+          <div class="value"><span class="js-value"></span><span class="unit">%</span></div>
+        </div>
+        <div class="cell pm25 js-pm25">
+          <div class="emoji">🌫️</div>
+          <div class="description">PM 2.5</div>
+          <div class="value"><span class="js-value"></span><span class="unit">μg/m³</span></div>
+        </div>
+      </div>
+
+      <hr>
+
+      <h2>Settings</h2>
+
+      <form>
+        <div>
+          <label>Name:</label>
+          <input type="text" name="name" value="" placeholder="outdoor">
+        </div>
+
+        <div>
+          <label>MQTT Server:</label>
+          <input type="text" name="mqtt_server" value="" placeholder="192.168.0.100">
+        </div>
+
+        <div>
+          <label>MQTT Port:</label>
+          <input type="text" name="mqtt_port" value="" placeholder="1884">
+        </div>
+
+        <div>
+          <label>MQTT Prefix:</label>
+          <input type="text" name="mqtt_prefix" value="" placeholder="home/outdoor/esp8266aq">
+        </div>
+
+        <input type="submit" value="Save and restart" />
+      </form>
+
+      <hr>
+
+      <details>
+        <summary>Debug JSON</summary>
+        <pre class="js-raw-json"></pre>
+      </details>
+    </div>
+  </body>
+</html>

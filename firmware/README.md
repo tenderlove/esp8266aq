@@ -7,34 +7,62 @@ I am perfectly happy even though it isn't C).
 
 ## Prerequisites
 
-Make sure you have Arduino IDE installed.  I like to use the command line tools,
-so I made a `Makefile` that will setup most of the stuff.
+This firmware uses [PlatformIO](https://platformio.org).  Make sure you install
+PlatformIO first!
 
-You'll also need a programmer for the ESP8266.  [This
-one](https://www.amazon.com/gp/product/B07KF119YB/) works well for me.
+## MQTT
 
-If you're on macOS, the Python path seems broken, so you might have to do this:
+This firmware uses MQTT to publish data to an MQTT server.  That means the
+module must be configured with connection information so it knows where to
+connect.  Setting up an MQTT server is outside the scope of this document, but
+I've heard that [Home Assistant](https://www.home-assistant.io) makes it easy.
+
+When compiling the firmware, you'll need the following information about the
+MQTT connection:
+
+1. The node name. A unique name given to this module. The name can be anything as long as it's unique.  For example, I'm using `office-aq` for the sensor in my office.
+2. The MQTT server hostname. (Make sure it's not an mDNS name)
+3. The MQTT prefix. This is a prefix string that indicates where the sensor is. For my office I'm using `home/office/esp8266aq`.
+
+## Compiling and Uploading
+
+The MQTT configuration can be specified by environment variables.
+
+I compile and flash my firmware like this:
 
 ```
-$ cd ~/Library/Arduino15/packages/esp8266/tools/python3/3.7.2-post1
-$ rm python3 
-$ ln -s /usr/bin/python3
+$ MQTT_SERVER=tender.home NODE_NAME=office-aq MQTT_PREFIX=home/office/esp8266aq make flash
 ```
 
-## Command Line
+If this is your first time flashing the chip, make sure to read the next step!!
 
-If you're using the command line, just do:
+## IMPORTANT: First Time Uploading
 
-1. `make setup` to install libraries
-2. `make compile` to compile stuff
-3. `make flash` to flash the ESP8266
+This firmware makes use of a special filesystem that is flashed independently
+of the normal runtime firmware.  You need to upload the file system
+independently of the normal firmware.  This step writes all of the file in the
+`data` directory to the ESP.
 
-If you've already assembled the PCB, this should be it.  By default the ESP8266
+To upload the file system, do:
+
+```
+$ make uploadfs
+```
+
+You only need to upload the filesystem whenever things in the `data` directory change.
+
+1. `make flash` to compile stuff and upload it to the ESP
+
+## First Time Connecting
+
+The first time the chip boots, by default the ESP8266
 will create an ad-hoc network.  Connect to that network and configure the chip
 with your wifi credentials.  After it connects to your network it will start
-broadcasting sensor information.
+broadcasting sensor information to your MQTT server.
 
-You may need to adjust `PORT` inside the `Makefile` in case your programmer is
-in a different location.
+## Development
 
-See [`client.rb`](../client.rb) in the main director for a Ruby client that listens for sensor data.
+My typical development process looks like this:
+
+1. Edit code
+2. Run `make flash && ruby utils/serial-client.rb`
