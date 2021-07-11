@@ -51,9 +51,9 @@ end
 influx = InfluxWrapper.connect
 
 MQTT::Client.connect HOST do |client|
-  client.get "home/+/esp/+"
-  client.get "home/+/esp8266aq/+"
-  client.get "home/+/+/esp8266aq/+"
+  client.subscribe "home/+/esp/+"
+  client.subscribe "home/+/esp8266aq/+"
+  client.subscribe "home/+/+/esp8266aq/+"
 
   loop do
     topic, message = client.get
