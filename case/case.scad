@@ -69,21 +69,22 @@ module pcbCutout() {
 module fanCutOut() {
   fan_outer_radius = 9;
   fan_inner_radius = 6;
+  epsilon = 1;
 
-  translate([PM25_X, BIG_VENT_CENTER, PM25_Z / 2])
+  translate([PM25_X - epsilon, BIG_VENT_CENTER, PM25_Z / 2])
     rotate([0, 90, 0])
     difference() {
       $fn = 90;
-      linear_extrude(WALL_SIZE)
+      linear_extrude(WALL_SIZE + epsilon)
         circle(r = fan_outer_radius);
 
-      linear_extrude(WALL_SIZE)
+      linear_extrude(WALL_SIZE + epsilon)
         circle(r = fan_inner_radius);
 
-      linear_extrude(WALL_SIZE)
+      linear_extrude(WALL_SIZE + epsilon)
         square(size = [3.1, fan_outer_radius * 2], center = true);
 
-      linear_extrude(WALL_SIZE)
+      linear_extrude(WALL_SIZE + epsilon)
         square(size = [fan_outer_radius * 2, 1.6], center = true);
     }
 }
