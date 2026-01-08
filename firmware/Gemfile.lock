@@ -2,7 +2,9 @@ GEM
   remote: https://rubygems.org/
   specs:
     influxdb (0.8.1)
-    mqtt (0.5.0)
+    logger (1.7.0)
+    mqtt (0.7.0)
+      logger
 
 PLATFORMS
   ruby
